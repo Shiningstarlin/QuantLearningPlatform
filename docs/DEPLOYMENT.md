@@ -28,6 +28,20 @@ docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml ps
 ```
 
+如果服务器访问 PyPI 或 npm registry 很慢，默认构建会使用国内镜像：
+
+- Python: `https://pypi.tuna.tsinghua.edu.cn/simple`
+- npm: `https://registry.npmmirror.com`
+
+如需改回官方源，可以在启动前临时设置：
+
+```bash
+export PIP_INDEX_URL=https://pypi.org/simple
+export PIP_TRUSTED_HOST=pypi.org
+export NPM_REGISTRY=https://registry.npmjs.org
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
 ## 必须编辑的文件
 
 `backend/.env.production` 需要按服务器实际情况修改：
