@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env and secrets
+.env
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+!.env.example
+!backend/.env.example
+!backend/.env.production.example
+!frontend/.env.example
+!frontend/.env.production.example
+
+# Local data, caches, and logs
+*.db
+*.sqlite
+*.sqlite3
+backend/var/
+logs/
+*.log
+market_snapshot_output.txt
+
+# Local reference material and Codex workspace state
+referencecode/
+.agents/
+.codex/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
