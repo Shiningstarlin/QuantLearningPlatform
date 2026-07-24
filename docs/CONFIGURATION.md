@@ -106,11 +106,13 @@ MARKET_DATA_PROVIDER=mock
 ```env
 YFINANCE_PROXY_URL=http://127.0.0.1:7890
 YFINANCE_REQUEST_TIMEOUT=20
+YFINANCE_USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150.0.0.0 Safari/537.36
+YFINANCE_ACCEPT=application/json,text/plain,*/*
 YFINANCE_CACHE_DIR=var/yfinance-cache
 YFINANCE_DISABLE_PERSISTENT_CACHE=true
 ```
 
-`YFINANCE_PROXY_URL` 在正式环境中应改成该环境可访问的代理地址和端口。当前项目默认禁用 yfinance 的持久化缓存，因为部分 Windows/Python 环境下 yfinance 内部 SQLite 缓存会出现 `unable to open database file`，禁用后仍可正常下载历史行情。
+`YFINANCE_PROXY_URL` 在正式环境中应改成该环境可访问的代理地址和端口。如果后端运行在 Docker 容器中，而代理运行在宿主机上，通常应写成 `http://host.docker.internal:7890`，而不是 `http://127.0.0.1:7890`。`YFINANCE_USER_AGENT` 和 `YFINANCE_ACCEPT` 会注入到 yfinance 的 HTTP session 中，用于模拟浏览器请求。当前项目默认禁用 yfinance 的持久化缓存，因为部分 Windows/Python 环境下 yfinance 内部 SQLite 缓存会出现 `unable to open database file`，禁用后仍可正常下载历史行情。
 
 看板资产代码会在后端自动转换为 yfinance ticker：
 

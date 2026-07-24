@@ -355,6 +355,7 @@ class BacktestService:
                 progress=False,
                 threads=False,
                 timeout=settings.yfinance_request_timeout,
+                session=self._yfinance_session(),
             )
         except Exception as exc:
             raise HTTPException(status_code=400, detail=f"Failed to load historical prices from yfinance: {exc}") from exc
@@ -497,6 +498,25 @@ class BacktestService:
                 yf.config.network.proxy = proxy_url
             else:
                 yf.set_config(proxy=proxy_url)
+
+    @staticmethod
+    def _yfinance_session():
+        import requests
+
+        session = requests.Session()
+        user_agent = settings.yfinance_user_agent.strip()
+        if user_agent:
+            session.headers.update({"User-Agent": user_agent})
+
+        accept = settings.yfinance_accept.strip()
+        if accept:
+            session.headers.update({"Accept": accept})
+
+        proxy_url = settings.yfinance_proxy_url.strip()
+        if proxy_url:
+            session.proxies.update({"http": proxy_url, "https": proxy_url})
+
+        return session
 
     @staticmethod
     def _disable_yfinance_persistent_cache() -> None:

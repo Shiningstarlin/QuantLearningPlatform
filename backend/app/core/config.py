@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     futu_snapshot_max_requests_per_minute: int = 30
     yfinance_proxy_url: str = ""
     yfinance_request_timeout: int = 20
+    yfinance_user_agent: str = ""
+    yfinance_accept: str = "application/json,text/plain,*/*"
     yfinance_cache_dir: str = ".yfinance-cache"
     yfinance_disable_persistent_cache: bool = True
     finnhub_api_key: str = ""

@@ -51,6 +51,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 - `FRONTEND_ORIGIN`：正式域名，例如 `https://quant.example.com`；如果只用服务器 IP 临时访问，可先写 `http://服务器IP`。
 - `FUTU_HOST` / `FUTU_PORT`：FutuOpenD 的地址。如果 FutuOpenD 跑在 Docker 宿主机，Linux Docker 常用 `host.docker.internal:11111`，本项目 compose 已加 `host-gateway` 映射。
 - `YFINANCE_PROXY_URL`：生产环境如果也需要代理访问 Yahoo Finance，在这里填写服务器可访问的代理地址。
+- `YFINANCE_USER_AGENT` / `YFINANCE_ACCEPT`：生产环境访问 yfinance 如果需要模拟浏览器请求头，在这里填写。
 
 `docker-compose.prod.yml` 通常只需要改：
 
