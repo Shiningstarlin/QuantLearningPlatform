@@ -53,6 +53,21 @@ docker compose -f docker-compose.prod.yml up -d --build
 - `YFINANCE_PROXY_URL`：生产环境如果也需要代理访问 Yahoo Finance，在这里填写服务器可访问的代理地址。
 - `YFINANCE_USER_AGENT` / `YFINANCE_ACCEPT`：生产环境访问 yfinance 如果需要模拟浏览器请求头，在这里填写。
 
+如果服务器宿主机运行 Clash，`docker-compose.prod.yml` 已经把后端容器的 HTTP/HTTPS/ALL proxy 指向 `host.docker.internal:7890`。Clash 需要允许 Docker 容器访问这个端口；如果只监听 `127.0.0.1:7890`，容器通常连不上。建议确认 Clash 配置类似：
+
+```yaml
+mixed-port: 7890
+allow-lan: true
+bind-address: '*'
+```
+
+然后在服务器上检查：
+
+```bash
+ss -lntp | grep 7890
+docker compose -f docker-compose.prod.yml exec backend python -c "import socket; s=socket.create_connection(('host.docker.internal',7890),5); print('ok')"
+```
+
 `docker-compose.prod.yml` 通常只需要改：
 
 - `frontend.ports`：默认把容器 80 端口映射到服务器 80。
