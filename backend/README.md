@@ -58,3 +58,5 @@ AI_BASE_URL=https://api.openai.com/v1
 ```
 
 The AI endpoint is OpenAI-compatible (`POST /chat/completions`); credentials stay on the backend and are never sent to the browser.
+
+The backend declares `httpx[socks]` so deployments using `HTTP_PROXY`, `HTTPS_PROXY` or `ALL_PROXY` with a `socks5://` URL also install the required `socksio` package. Reinstall dependencies after pulling this change.
