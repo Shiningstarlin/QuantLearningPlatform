@@ -7,6 +7,7 @@ from app.core.database import Base, engine
 from app.models import asset, backtest, market, position, simulation, user  # noqa: F401
 from app.routers import assets, auth, backtests, health, market_board, simulation_tasks, strategy_templates, trading
 from app.services.market_scheduler import market_board_scheduler
+from app.services.account_summary_scheduler import account_summary_scheduler
 
 
 def apply_lightweight_migrations() -> None:
@@ -49,6 +50,11 @@ def apply_lightweight_migrations() -> None:
             if "cash_available_on" not in account_columns:
                 connection.execute(text("ALTER TABLE simulated_accounts ADD COLUMN cash_available_on DATE"))
 
+        if "market_quotes" in inspector.get_table_names():
+            market_quote_indexes = {index["name"] for index in inspector.get_indexes("market_quotes")}
+            if "ix_market_quotes_asset_time" not in market_quote_indexes:
+                connection.execute(text("CREATE INDEX ix_market_quotes_asset_time ON market_quotes (asset_id, quote_time)"))
+
 
 def create_app() -> FastAPI:
     Base.metadata.create_all(bind=engine)
@@ -75,10 +81,12 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def start_market_board_scheduler() -> None:
         market_board_scheduler.start()
+        account_summary_scheduler.start()
 
     @app.on_event("shutdown")
     def stop_market_board_scheduler() -> None:
         market_board_scheduler.stop()
+        account_summary_scheduler.stop()
 
     return app
 

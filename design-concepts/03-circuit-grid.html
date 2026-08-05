@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quant Lab · Circuit Grid</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="prototype-shell circuit">
+    <header class="prototype-topbar">
+      <a class="prototype-brand" href="./index.html"><span class="brand-mark">QX</span><span>Quant Lab</span></a>
+      <nav class="prototype-nav"><span class="nav-active">我的账户</span><span>行情看板</span><span>策略回测</span><a href="#">进入系统</a></nav>
+    </header>
+    <main class="prototype-main">
+      <section class="guest-banner">
+        <div>
+          <span class="guest-state">SYSTEM / GUEST OBSERVER</span>
+          <h1>把策略、资产<br />和风险连成一张网。</h1>
+          <p>这里不是一张静态余额表，而是模拟资金、行情、交易规则和策略信号共同运行的账户工作台。</p>
+        </div>
+        <div class="guest-actions"><span>当前您未登录，请</span><a href="#">注册账户</a><a class="secondary" href="#">登录账户</a><span>或以游客身份</span><a class="secondary" href="#">进行策略回测</a></div>
+      </section>
+      <section class="account-stage">
+        <span class="stage-label">Node 01 / static account model</span>
+        <div class="account-heading"><div><h2>模拟账户示例</h2><p>3 项进行中的投资 · 06:00 settlement node</p></div><strong>ALPHA +2.84%</strong></div>
+        <div class="dashboard-frame">
+          <div class="dashboard-primary">
+            <div class="metric-strip"><div><label>Equity / HKD</label><strong>1,032,840</strong><small>+32,840 total P&amp;L</small></div><div><label>Free cash</label><strong>379,670</strong><small>36.8% reserve</small></div><div><label>Risk state</label><strong>LOW / 0.18</strong><small>drawdown -1.06%</small></div></div>
+            <div class="chart-caption"><span>NET VALUE SIGNAL / 13 SETTLEMENTS</span><strong>LIVE MODEL · SIMULATED</strong></div>
+            <svg class="account-chart" viewBox="0 0 760 218" role="img" aria-label="账户净值曲线">
+              <line class="grid-line" x1="0" y1="32" x2="760" y2="32" /><line class="grid-line" x1="0" y1="92" x2="760" y2="92" /><line class="grid-line" x1="0" y1="152" x2="760" y2="152" /><path class="fill" d="M0 166 L64 151 L126 156 L190 132 L250 138 L315 110 L378 126 L442 100 L505 108 L570 76 L632 88 L698 55 L760 62 L760 208 L0 208 Z" /><path class="curve" d="M0 166 L64 151 L126 156 L190 132 L250 138 L315 110 L378 126 L442 100 L505 108 L570 76 L632 88 L698 55 L760 62" /><circle class="dot" cx="760" cy="62" r="5" /><text class="chart-axis" x="0" y="213">D01</text><text class="chart-axis" x="365" y="213">D07</text><text class="chart-axis" x="708" y="213">D13</text>
+            </svg>
+            <div class="project-ribbon"><div><small>NODE A · HK.00700</small><strong>286,730 HKD</strong><span>QUANT / +2.18%</span></div><div><small>NODE B · US.NVDA</small><strong>213,480 HKD</strong><span>MANUAL / +5.64%</span></div><div><small>NODE C · SI=F</small><strong>152,960 HKD</strong><span>COMMODITY / -1.12%</span></div></div>
+          </div>
+          <aside class="dashboard-side">
+            <div class="allocation-title"><h3>CAPITAL ROUTING</h3><span>100% ALLOCATED</span></div>
+            <div class="allocation-list"><div class="allocation-item"><i class="allocation-marker"></i><div><strong>HK.00700</strong><small>signal node · 27.8%</small></div><b>286,730</b></div><div class="allocation-item"><i class="allocation-marker gold"></i><div><strong>US.NVDA</strong><small>manual node · 20.7%</small></div><b>213,480</b></div><div class="allocation-item"><i class="allocation-marker gold"></i><div><strong>SI=F</strong><small>commodity node · 14.8%</small></div><b>152,960</b></div><div class="allocation-item"><i class="allocation-marker muted"></i><div><strong>RESERVE</strong><small>unallocated cash · 36.8%</small></div><b>379,670</b></div></div>
+            <p class="status-note">DEMO DATA · This account is a static visual concept. The production account will expose signals, execution costs, settlement locks and performance snapshots as separate layers.</p>
+          </aside>
+        </div>
+      </section>
+    </main>
+    <footer class="prototype-footer">STYLE 03 · CIRCUIT GRID · GUEST ACCOUNT VIEW</footer>
+  </body>
+</html>

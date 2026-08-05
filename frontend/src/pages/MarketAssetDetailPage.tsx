@@ -47,9 +47,10 @@ export function MarketAssetDetailPage() {
   return (
     <>
       <PageHeader title={row ? `${row.asset.symbol} 行情` : "资产行情"} subtitle="按分时、日、周、月查看已保存的报价走势。">
-        <Link className="button" to="/market-board">
-          返回看板
-        </Link>
+        <div className="page-actions">
+          {row ? <Link className="button primary" to={`/factor-radar?assetId=${row.asset.id}`}>打开因子雷达</Link> : null}
+          <Link className="button" to="/market-board">返回看板</Link>
+        </div>
       </PageHeader>
 
       <div className="timeframe-tabs">

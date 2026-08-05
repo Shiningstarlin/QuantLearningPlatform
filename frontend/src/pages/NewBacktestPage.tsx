@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { apiRequest, BacktestAsset, BacktestBatch, BacktestPreview, BacktestRun, getToken } from "../lib/api";
+import { apiRequest, BacktestAsset, BacktestBatch, BacktestPreview, BacktestRun } from "../lib/api";
 import { LineChart } from "../ui/LineChart";
 import { PageHeader } from "../ui/PageHeader";
 
@@ -33,20 +33,16 @@ export function NewBacktestPage() {
   const currency = preview?.currency ?? selectedAsset?.currency ?? "USD";
 
   useEffect(() => {
-    if (!getToken()) {
-      navigate("/login");
-      return;
-    }
     apiRequest<BacktestAsset[]>("/api/backtests/assets")
       .then((data) => {
         setAssets(data);
         if (data[0]) {
           setAssetKey(data[0].key);
-          setName(`${data[0].name || data[0].symbol} 历史回测`);
+          setName(`${data[0].name || data[0].symbol} 策略回测`);
         }
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "加载回测资产失败"));
-  }, [navigate]);
+      .catch((err) => setError(err instanceof Error ? err.message : "加载回测标的失败"));
+  }, []);
 
   useEffect(() => {
     if (!selectedAsset || !startDate || !endDate) {
@@ -82,7 +78,7 @@ export function NewBacktestPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedAsset) {
-      setError("请选择一个回测资产。");
+      setError("请选择一个回测标的。");
       return;
     }
     if (strategyKeys.length === 0) {
@@ -128,7 +124,7 @@ export function NewBacktestPage() {
       });
       navigate(`/backtests/${run.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "创建回测失败");
+      setError(err instanceof Error ? err.message : "创建策略回测失败");
     } finally {
       setLoading(false);
     }
@@ -150,15 +146,15 @@ export function NewBacktestPage() {
 
   return (
     <>
-      <PageHeader title="新建历史回测" subtitle="仅使用 yfinance 历史 OHLCV 数据，和行情看板保存的实时节点数据分开。">
+      <PageHeader title="新建策略回测" subtitle="使用 yfinance 历史行情数据，复盘某段时间内策略会如何交易。">
         <Link className="button" to="/backtests">
-          返回回测列表
+          返回策略回测
         </Link>
       </PageHeader>
 
       <form className="form-panel" onSubmit={handleSubmit}>
         <label>
-          回测资产
+          回测标的
           <select
             value={assetKey}
             onChange={(event) => {
@@ -166,7 +162,7 @@ export function NewBacktestPage() {
               setAssetKey(nextKey);
               const nextAsset = assets.find((asset) => asset.key === nextKey);
               if (nextAsset) {
-                setName(`${nextAsset.name || nextAsset.symbol} 历史回测`);
+                setName(`${nextAsset.name || nextAsset.symbol} 策略回测`);
               }
             }}
             required
@@ -180,7 +176,7 @@ export function NewBacktestPage() {
         </label>
         {assets.length === 0 ? (
           <div className="empty-state compact-empty">
-            当前没有可用回测资产。可先到 <Link to="/market-board">行情看板</Link> 添加股票，或检查后端配置。
+            当前没有可回测标的。请检查后端回测标的配置，或确认行情看板默认标的已同步。
           </div>
         ) : null}
         <label>
@@ -226,8 +222,8 @@ export function NewBacktestPage() {
         <section className="preview-panel">
           <div className="chart-panel-header">
             <div>
-              <strong>资产价格预览</strong>
-              <span>{selectedAsset ? `${selectedAsset.name} · ${startDate} 至 ${endDate}` : "选择资产后预览历史价格"}</span>
+              <strong>标的价格预览</strong>
+              <span>{selectedAsset ? `${selectedAsset.name} · ${startDate} 至 ${endDate}` : "选择标的后预览历史价格"}</span>
             </div>
             <div className="price">
               {preview?.asset_metrics ? `区间涨跌 ${(preview.asset_metrics.raw_return * 100).toFixed(2)}%` : ""}
@@ -257,7 +253,7 @@ export function NewBacktestPage() {
         </label>
         {error ? <div className="error-text">{error}</div> : null}
         <button className="button primary" type="submit" disabled={loading || assets.length === 0 || strategyKeys.length === 0}>
-          {loading ? "回测运行中..." : strategyKeys.length > 1 ? "运行并对比回测" : "运行回测"}
+          {loading ? "正在计算..." : strategyKeys.length > 1 ? "运行并对比策略" : "开始策略回测"}
         </button>
       </form>
     </>

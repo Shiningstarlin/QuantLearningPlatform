@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>NEBULA QUANT — Future Dark UI Demo</title>
+  <style>
+    :root {
+      --bg: #050812;
+      --bg-elevated: #08101d;
+      --surface: rgba(13, 24, 43, 0.82);
+      --surface-strong: #0d182b;
+      --surface-soft: rgba(17, 31, 54, 0.62);
+      --border: rgba(104, 143, 194, 0.18);
+      --border-strong: rgba(0, 215, 255, 0.35);
+      --text: #e9f2ff;
+      --muted: #8294ad;
+      --muted-2: #53647b;
+      --cyan: #00d7ff;
+      --cyan-soft: rgba(0, 215, 255, 0.12);
+      --violet: #8b5cf6;
+      --violet-soft: rgba(139, 92, 246, 0.14);
+      --lime: #b7f34a;
+      --green: #2ed47a;
+      --red: #ff5577;
+      --orange: #ffb547;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --sidebar: 82px;
+      --right-panel: 320px;
+      --topbar: 68px;
+      --font-ui: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(0, 215, 255, 0.09), transparent 26%),
+        radial-gradient(circle at 82% 18%, rgba(139, 92, 246, 0.11), transparent 30%),
+        linear-gradient(180deg, #050812 0%, #050914 58%, #03060d 100%);
+      color: var(--text);
+      font-family: var(--font-ui);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.42;
+      background-image:
+        linear-gradient(rgba(89, 126, 169, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(89, 126, 169, 0.055) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: linear-gradient(to bottom, black 0%, transparent 82%);
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+
+    .app {
+      position: relative;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: var(--sidebar) minmax(0, 1fr) var(--right-panel);
+      grid-template-rows: var(--topbar) minmax(0, 1fr);
+      transition: grid-template-columns .28s ease;
+    }
+
+    .app.sidebar-open { --sidebar: 232px; }
+    .app.copilot-closed { --right-panel: 0px; }
+
+    .glass {
+      background: linear-gradient(145deg, rgba(16, 30, 53, 0.84), rgba(8, 16, 30, 0.82));
+      border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025), var(--shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .topbar {
+      grid-column: 1 / 4;
+      grid-row: 1;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(5, 9, 18, 0.78);
+      backdrop-filter: blur(18px);
+      z-index: 20;
+    }
+
+    .brand {
+      width: calc(var(--sidebar) - 14px);
+      min-width: calc(var(--sidebar) - 14px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      overflow: hidden;
+      transition: width .28s ease, min-width .28s ease;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      border: 1px solid rgba(0, 215, 255, 0.42);
+      border-radius: 11px;
+      box-shadow: 0 0 26px rgba(0, 215, 255, 0.18), inset 0 0 18px rgba(0, 215, 255, 0.08);
+      transform: rotate(45deg);
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border: 1px solid var(--cyan);
+      border-radius: 4px;
+    }
+
+    .brand-mark::after {
+      inset: 13px;
+      background: var(--cyan);
+      box-shadow: 0 0 16px rgba(0, 215, 255, 0.85);
+    }
+
+    .brand-copy {
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: .2s ease;
+      white-space: nowrap;
+    }
+
+    .sidebar-open .brand-copy { opacity: 1; transform: none; }
+    .brand-copy strong { display:block; font-size:14px; letter-spacing:.18em; }
+    .brand-copy span { display:block; margin-top:3px; font-size:9px; color:var(--muted); letter-spacing:.22em; }
+
+    .workspace-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 38px;
+      min-width: 214px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      background: rgba(12, 22, 39, 0.72);
+      border-radius: 10px;
+      color: #c9d8eb;
+      cursor: pointer;
+    }
+
+    .workspace-pill .dot { width:8px; height:8px; border-radius:50%; background:var(--violet); box-shadow:0 0 14px var(--violet); }
+    .workspace-pill b { font-size:12px; font-weight:600; }
+    .workspace-pill small { color:var(--muted); margin-left:auto; }
+
+    .search {
+      height: 38px;
+      flex: 1;
+      max-width: 540px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(8, 15, 27, 0.75);
+      transition: .2s ease;
+    }
+
+    .search:focus-within {
+      border-color: rgba(0,215,255,.48);
+      box-shadow: 0 0 0 3px rgba(0,215,255,.08), 0 0 24px rgba(0,215,255,.08);
+    }
+
+    .search svg { width:16px; opacity:.58; }
+    .search input { flex:1; background:transparent; border:0; outline:0; color:var(--text); font-size:12px; }
+    .search input::placeholder { color:#56677d; }
+    .kbd { padding:3px 7px; border:1px solid var(--border); border-radius:6px; color:var(--muted); font:10px var(--font-mono); background:rgba(255,255,255,.025); }
+
+    .status-strip {
+      margin-left:auto;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .status-item {
+      height:34px;
+      display:flex;
+      align-items:center;
+      gap:7px;
+      padding:0 10px;
+      color:var(--muted);
+      border:1px solid transparent;
+      border-radius:9px;
+      font:10px var(--font-mono);
+      white-space:nowrap;
+    }
+    .status-item:hover { background:rgba(255,255,255,.03); border-color:var(--border); }
+    .status-item .live { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 12px var(--green); animation:pulse 1.8s infinite; }
+    .status-item strong { color:#dce8f8; font-weight:500; }
+    .avatar { width:32px; height:32px; border-radius:10px; display:grid; place-items:center; border:1px solid rgba(139,92,246,.4); background:linear-gradient(145deg, rgba(139,92,246,.22), rgba(0,215,255,.08)); color:#fff; font-size:11px; }
+
+    .sidebar {
+      grid-column: 1;
+      grid-row: 2;
+      display:flex;
+      flex-direction:column;
+      padding:14px 12px;
+      border-right:1px solid var(--border);
+      background:rgba(5, 10, 20, .66);
+      backdrop-filter:blur(14px);
+      overflow:hidden;
+      z-index:10;
+    }
+
+    .sidebar-toggle {
+      height:36px;
+      width:100%;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.02);
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      margin-bottom:14px;
+    }
+    .sidebar-open .sidebar-toggle { justify-content:flex-end; padding-right:10px; }
+
+    .nav-section { margin-bottom:18px; }
+    .nav-label { height:20px; overflow:hidden; padding-left:12px; color:#44556b; font-size:9px; font-weight:700; letter-spacing:.18em; opacity:0; transition:.2s ease; }
+    .sidebar-open .nav-label { opacity:1; }
+
+    .nav-item {
+      position:relative;
+      width:100%;
+      height:44px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:0 12px;
+      margin:4px 0;
+      border:1px solid transparent;
+      border-radius:11px;
+      background:transparent;
+      color:#7588a1;
+      cursor:pointer;
+      overflow:hidden;
+      transition:.2s ease;
+    }
+    .nav-item:hover { color:#d7e6f8; background:rgba(255,255,255,.025); border-color:var(--border); }
+    .nav-item.active { color:#eef8ff; background:linear-gradient(90deg, rgba(0,215,255,.12), rgba(0,215,255,.025)); border-color:rgba(0,215,255,.22); }
+    .nav-item.active::before { content:""; position:absolute; left:0; top:8px; bottom:8px; width:2px; border-radius:2px; background:var(--cyan); box-shadow:0 0 14px var(--cyan); }
+    .nav-item svg { width:18px; height:18px; flex:0 0 auto; stroke:currentColor; }
+    .nav-item span { white-space:nowrap; opacity:0; transform:translateX(-8px); transition:.18s ease; font-size:12px; }
+    .sidebar-open .nav-item span { opacity:1; transform:none; }
+    .nav-item em { margin-left:auto; font-style:normal; font:9px var(--font-mono); padding:2px 6px; border-radius:999px; color:var(--cyan); background:rgba(0,215,255,.08); opacity:0; }
+    .sidebar-open .nav-item em { opacity:1; }
+    .sidebar-footer { margin-top:auto; }
+
+    .main {
+      grid-column: 2;
+      grid-row: 2;
+      min-width:0;
+      overflow:auto;
+      padding:18px;
+      scrollbar-color:#23324a transparent;
+      scrollbar-width:thin;
+    }
+
+    .page-head {
+      min-height:58px;
+      display:flex;
+      align-items:center;
+      gap:16px;
+      margin-bottom:14px;
+    }
+    .page-title { min-width:0; }
+    .page-title .eyebrow { color:var(--cyan); font:9px var(--font-mono); letter-spacing:.18em; text-transform:uppercase; }
+    .page-title h1 { margin:5px 0 0; font-size:20px; line-height:1.2; font-weight:650; letter-spacing:-.02em; }
+    .page-title p { margin:5px 0 0; color:var(--muted); font-size:11px; }
+    .head-actions { margin-left:auto; display:flex; gap:9px; }
+
+    .btn {
+      height:36px;
+      padding:0 14px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.025);
+      color:#c8d6e9;
+      font-size:11px;
+      cursor:pointer;
+      transition:.2s ease;
+    }
+    .btn:hover { transform:translateY(-1px); border-color:rgba(0,215,255,.3); color:#fff; }
+    .btn.primary { border-color:rgba(0,215,255,.45); background:linear-gradient(135deg, rgba(0,215,255,.95), rgba(0,174,230,.86)); color:#031019; font-weight:700; box-shadow:0 0 26px rgba(0,215,255,.17); }
+    .btn.ai { border-color:rgba(139,92,246,.42); background:linear-gradient(135deg, rgba(139,92,246,.22), rgba(80,42,160,.18)); }
+    .btn svg { width:14px; height:14px; }
+
+    .metric-grid {
+      display:grid;
+      grid-template-columns:repeat(5, minmax(140px, 1fr));
+      gap:12px;
+      margin-bottom:12px;
+    }
+
+    .metric-card {
+      position:relative;
+      min-height:112px;
+      border-radius:var(--radius);
+      padding:14px;
+      overflow:hidden;
+      transition:.2s ease;
+    }
+    .metric-card:hover { transform:translateY(-2px); border-color:rgba(0,215,255,.28); }
+    .metric-card::after {
+      content:"";
+      position:absolute;
+      width:90px;
+      height:90px;
+      right:-35px;
+      top:-35px;
+      border-radius:50%;
+      background:var(--cyan-soft);
+      filter:blur(12px);
+    }
+    .metric-card:nth-child(2)::after, .metric-card:nth-child(5)::after { background:var(--violet-soft); }
+    .metric-top { display:flex; align-items:center; justify-content:space-between; color:var(--muted); font-size:10px; }
+    .metric-top .badge { padding:3px 7px; border:1px solid var(--border); border-radius:999px; font:8px var(--font-mono); color:#9eb1c8; }
+    .metric-value { margin-top:13px; font:600 23px/1.1 var(--font-mono); letter-spacing:-.04em; }
+    .metric-value .unit { color:var(--muted); font-size:11px; font-weight:400; }
+    .metric-foot { margin-top:8px; display:flex; align-items:center; gap:7px; font:9px var(--font-mono); color:var(--muted); }
+    .up { color:var(--green); }
+    .down { color:var(--red); }
+    .spark { position:absolute; left:0; right:0; bottom:0; height:33px; opacity:.8; }
+
+    .workspace-grid {
+      display:grid;
+      grid-template-columns:minmax(0, 1.45fr) minmax(330px, .75fr);
+      grid-template-rows:360px 280px;
+      gap:12px;
+      min-height:652px;
+    }
+
+    .panel {
+      position:relative;
+      min-width:0;
+      border-radius:var(--radius);
+      overflow:hidden;
+    }
+    .panel-header {
+      height:50px;
+      padding:0 14px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border-bottom:1px solid var(--border);
+      background:rgba(8,15,28,.36);
+    }
+    .panel-title { min-width:0; }
+    .panel-title strong { display:block; font-size:11px; font-weight:650; }
+    .panel-title span { display:block; margin-top:3px; color:var(--muted); font:8px var(--font-mono); }
+    .panel-tools { margin-left:auto; display:flex; align-items:center; gap:6px; }
+    .icon-btn { width:30px; height:30px; display:grid; place-items:center; border:1px solid transparent; background:transparent; color:var(--muted); border-radius:8px; cursor:pointer; }
+    .icon-btn:hover { background:rgba(255,255,255,.035); border-color:var(--border); color:#dce9f9; }
+    .icon-btn svg { width:14px; height:14px; }
+
+    .chart-panel { grid-column:1; grid-row:1; }
+    .chart-body { position:absolute; inset:50px 0 0; padding:14px 14px 8px; }
+    .chart-legend { position:absolute; top:14px; left:16px; display:flex; gap:14px; z-index:2; }
+    .legend-item { display:flex; align-items:center; gap:7px; color:var(--muted); font:9px var(--font-mono); }
+    .legend-line { width:18px; height:2px; background:var(--cyan); box-shadow:0 0 10px rgba(0,215,255,.7); }
+    .legend-line.bench { background:#69788e; box-shadow:none; }
+    #equityChart { width:100%; height:100%; display:block; }
+
+    .graph-panel { grid-column:2; grid-row:1; }
+    .graph-body { position:absolute; inset:50px 0 0; padding:16px; }
+    .graph-canvas { position:relative; width:100%; height:100%; }
+    .flow-line { position:absolute; height:1px; transform-origin:left center; background:linear-gradient(90deg, rgba(0,215,255,.1), rgba(0,215,255,.7), rgba(139,92,246,.55)); box-shadow:0 0 9px rgba(0,215,255,.2); }
+    .flow-line::after { content:""; position:absolute; right:-1px; top:-2px; width:5px; height:5px; border-radius:50%; background:var(--cyan); box-shadow:0 0 9px var(--cyan); }
+    .node {
+      position:absolute;
+      width:94px;
+      min-height:54px;
+      padding:9px 10px;
+      display:flex;
+      align-items:center;
+      gap:9px;
+      border:1px solid rgba(88, 127, 178, .24);
+      border-radius:12px;
+      background:linear-gradient(145deg, rgba(18,34,58,.92), rgba(8,16,29,.96));
+      box-shadow:0 12px 28px rgba(0,0,0,.22);
+      z-index:2;
+      cursor:pointer;
+      transition:.2s ease;
+    }
+    .node:hover { border-color:rgba(0,215,255,.48); transform:translateY(-2px); box-shadow:0 0 22px rgba(0,215,255,.09); }
+    .node-icon { width:25px; height:25px; display:grid; place-items:center; flex:0 0 auto; border-radius:8px; background:rgba(0,215,255,.08); border:1px solid rgba(0,215,255,.16); color:var(--cyan); font:10px var(--font-mono); }
+    .node.purple .node-icon { color:#c8b7ff; background:rgba(139,92,246,.11); border-color:rgba(139,92,246,.22); }
+    .node.warn .node-icon { color:var(--lime); background:rgba(183,243,74,.08); border-color:rgba(183,243,74,.18); }
+    .node strong { display:block; font-size:9px; }
+    .node span { display:block; margin-top:3px; color:var(--muted); font:7px var(--font-mono); }
+
+    .code-panel { grid-column:1; grid-row:2; }
+    .code-layout { position:absolute; inset:50px 0 0; display:grid; grid-template-columns:1fr 150px; }
+    .code-editor { min-width:0; overflow:auto; padding:12px 0 18px; border-right:1px solid var(--border); background:rgba(3,8,15,.25); }
+    .code-row { min-width:580px; height:20px; display:grid; grid-template-columns:44px 1fr; font:10px/20px var(--font-mono); }
+    .line-no { padding-right:12px; text-align:right; color:#34445a; user-select:none; }
+    .code-text { white-space:pre; color:#b9c9dc; }
+    .kw { color:#c79cff; }
+    .fn { color:#5ee7ff; }
+    .str { color:#b7f34a; }
+    .num { color:#ffbf69; }
+    .cm { color:#4f647d; font-style:italic; }
+    .op { color:#7e91a9; }
+    .cursor-line { background:linear-gradient(90deg, rgba(0,215,255,.06), transparent); }
+    .run-meta { padding:13px; }
+    .run-chip { padding:8px 10px; border:1px solid var(--border); border-radius:10px; margin-bottom:9px; background:rgba(255,255,255,.02); }
+    .run-chip label { display:block; color:var(--muted); font:8px var(--font-mono); }
+    .run-chip strong { display:block; margin-top:5px; font:11px var(--font-mono); }
+    .progress { height:5px; margin-top:8px; border-radius:999px; background:#142036; overflow:hidden; }
+    .progress span { display:block; height:100%; width:72%; background:linear-gradient(90deg,var(--violet),var(--cyan)); box-shadow:0 0 12px rgba(0,215,255,.5); }
+
+    .runs-panel { grid-column:2; grid-row:2; }
+    .runs-body { position:absolute; inset:50px 0 0; padding:8px 0; overflow:auto; }
+    .run-row { display:grid; grid-template-columns:1.1fr .7fr .7fr .55fr; align-items:center; gap:8px; padding:9px 13px; border-bottom:1px solid rgba(94,126,168,.09); font:9px var(--font-mono); color:#9cb0c7; }
+    .run-row.head { position:sticky; top:-8px; z-index:2; color:#53667e; background:#0a1220; font-size:8px; }
+    .run-row:hover:not(.head) { background:rgba(255,255,255,.02); }
+    .run-row b { color:#dce8f7; font-weight:500; }
+    .status-tag { justify-self:start; display:inline-flex; align-items:center; gap:5px; padding:3px 6px; border-radius:999px; background:rgba(46,212,122,.08); color:var(--green); border:1px solid rgba(46,212,122,.18); font-size:7px; }
+    .status-tag::before { content:""; width:5px; height:5px; border-radius:50%; background:currentColor; }
+    .status-tag.wait { color:var(--orange); background:rgba(255,181,71,.08); border-color:rgba(255,181,71,.17); }
+
+    .copilot {
+      grid-column:3;
+      grid-row:2;
+      min-width:0;
+      border-left:1px solid var(--border);
+      background:rgba(6, 11, 21, .76);
+      backdrop-filter:blur(18px);
+      overflow:hidden;
+      transition:opacity .18s ease;
+    }
+    .copilot-closed .copilot { opacity:0; pointer-events:none; }
+    .copilot-inner { width:var(--right-panel); height:100%; display:flex; flex-direction:column; }
+    .copilot-head { height:58px; flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:0 14px; border-bottom:1px solid var(--border); }
+    .ai-orb { position:relative; width:30px; height:30px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #c7b5ff 0%, var(--violet) 28%, #351874 66%, #0b0c25 100%); box-shadow:0 0 26px rgba(139,92,246,.42); }
+    .ai-orb::after { content:""; position:absolute; inset:5px; border:1px solid rgba(255,255,255,.3); border-radius:50%; }
+    .copilot-title strong { display:block; font-size:11px; }
+    .copilot-title span { display:block; margin-top:3px; color:var(--muted); font:8px var(--font-mono); }
+    .copilot-head .icon-btn { margin-left:auto; }
+    .copilot-scroll { flex:1; min-height:0; overflow:auto; padding:14px; }
+    .ai-context { padding:10px; border:1px solid rgba(139,92,246,.2); border-radius:12px; background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(0,215,255,.04)); margin-bottom:14px; }
+    .ai-context .label { color:#bca8ff; font:8px var(--font-mono); letter-spacing:.12em; }
+    .ai-context p { margin:7px 0 0; color:#acbdd2; font-size:10px; line-height:1.65; }
+    .message { margin-bottom:14px; }
+    .message-meta { display:flex; align-items:center; gap:7px; color:#5f7189; font:8px var(--font-mono); margin-bottom:6px; }
+    .message-meta .mini-orb { width:13px; height:13px; border-radius:50%; background:var(--violet); box-shadow:0 0 10px rgba(139,92,246,.55); }
+    .bubble { border:1px solid var(--border); border-radius:12px; padding:11px; background:rgba(14,25,44,.7); color:#b7c7da; font-size:10px; line-height:1.65; }
+    .bubble strong { color:#edf5ff; }
+    .insight-card { margin-top:9px; border:1px solid rgba(0,215,255,.17); border-radius:10px; overflow:hidden; }
+    .insight-row { display:flex; align-items:center; gap:8px; padding:8px 9px; border-bottom:1px solid rgba(0,215,255,.08); color:#91a8c1; font:8px var(--font-mono); }
+    .insight-row:last-child { border-bottom:0; }
+    .insight-row span:last-child { margin-left:auto; color:#dbe9f8; }
+    .suggestions { display:flex; flex-wrap:wrap; gap:7px; }
+    .suggestion { border:1px solid var(--border); border-radius:999px; background:transparent; color:#7f93ac; padding:6px 9px; font-size:8px; cursor:pointer; }
+    .suggestion:hover { color:#dce8f7; border-color:rgba(139,92,246,.35); background:rgba(139,92,246,.06); }
+    .copilot-input { flex:0 0 auto; padding:12px; border-top:1px solid var(--border); background:rgba(5,9,17,.88); }
+    .prompt-box { min-height:78px; border:1px solid var(--border); border-radius:12px; background:rgba(10,18,31,.8); padding:10px; }
+    .prompt-box textarea { width:100%; height:40px; resize:none; border:0; outline:0; color:var(--text); background:transparent; font:10px/1.5 var(--font-ui); }
+    .prompt-box textarea::placeholder { color:#465871; }
+    .prompt-actions { display:flex; align-items:center; margin-top:6px; }
+    .prompt-actions span { color:#4f6177; font:8px var(--font-mono); }
+    .send-btn { margin-left:auto; width:28px; height:28px; border:1px solid rgba(139,92,246,.35); border-radius:8px; background:linear-gradient(135deg,rgba(139,92,246,.8),rgba(98,64,210,.7)); cursor:pointer; display:grid; place-items:center; box-shadow:0 0 18px rgba(139,92,246,.18); }
+    .send-btn svg { width:12px; height:12px; }
+
+    .toast {
+      position:fixed;
+      left:50%;
+      bottom:24px;
+      transform:translate(-50%, 18px);
+      z-index:100;
+      display:flex;
+      align-items:center;
+      gap:9px;
+      padding:10px 14px;
+      border:1px solid rgba(0,215,255,.25);
+      border-radius:10px;
+      background:rgba(7,15,27,.94);
+      box-shadow:0 20px 50px rgba(0,0,0,.4),0 0 20px rgba(0,215,255,.08);
+      color:#cce6f4;
+      font-size:10px;
+      opacity:0;
+      pointer-events:none;
+      transition:.25s ease;
+    }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    .toast i { width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 12px var(--cyan); }
+
+    @keyframes pulse { 0%,100%{opacity:1; transform:scale(1)} 50%{opacity:.55; transform:scale(.82)} }
+    @keyframes shimmer { from{transform:translateX(-120%)} to{transform:translateX(240%)} }
+
+    .scanline {
+      pointer-events:none;
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+      opacity:.22;
+    }
+    .scanline::before {
+      content:"";
+      position:absolute;
+      top:0;
+      bottom:0;
+      width:35%;
+      background:linear-gradient(90deg,transparent,rgba(0,215,255,.05),transparent);
+      animation:shimmer 8s linear infinite;
+    }
+
+    @media (max-width: 1240px) {
+      :root { --right-panel: 290px; }
+      .metric-grid { grid-template-columns:repeat(3,1fr); }
+      .metric-card:nth-child(4), .metric-card:nth-child(5) { display:none; }
+      .workspace-grid { grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr); }
+      .status-item:nth-child(2), .status-item:nth-child(3) { display:none; }
+    }
+
+    @media (max-width: 980px) {
+      :root { --sidebar:68px; --right-panel:0px; }
+      .app { grid-template-columns:var(--sidebar) minmax(0,1fr); }
+      .topbar { grid-column:1/3; }
+      .copilot { display:none; }
+      .workspace-pill { display:none; }
+      .metric-grid { grid-template-columns:repeat(2,1fr); }
+      .metric-card:nth-child(3) { display:none; }
+      .workspace-grid { grid-template-columns:1fr; grid-template-rows:340px 300px 260px; }
+      .chart-panel { grid-column:1; grid-row:1; }
+      .graph-panel { grid-column:1; grid-row:2; }
+      .code-panel { grid-column:1; grid-row:3; }
+      .runs-panel { display:none; }
+    }
+
+    @media (max-width: 660px) {
+      body { overflow:auto; }
+      .app { min-height:100vh; height:auto; display:block; }
+      .topbar { position:sticky; top:0; height:58px; padding:0 10px; }
+      .brand { width:42px; min-width:42px; }
+      .search { max-width:none; }
+      .status-strip { display:none; }
+      .sidebar { display:none; }
+      .main { overflow:visible; padding:12px; }
+      .page-head { align-items:flex-start; }
+      .page-title p, .head-actions .btn:not(.primary) { display:none; }
+      .metric-grid { grid-template-columns:1fr 1fr; gap:8px; }
+      .metric-card { min-height:100px; }
+      .workspace-grid { display:flex; flex-direction:column; min-height:0; }
+      .panel { min-height:310px; }
+      .graph-panel { min-height:330px; }
+      .code-panel { min-height:280px; }
+      .code-layout { grid-template-columns:1fr; }
+      .run-meta { display:none; }
+      .code-editor { border-right:0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation:none !important; transition:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-copy">
+          <strong>NEBULA QUANT</strong>
+          <span>ALGORITHMIC RESEARCH SYSTEM</span>
+        </div>
+      </div>
+
+      <button class="workspace-pill" type="button" onclick="showToast('已切换至 Cross-Asset Alpha 工作区')">
+        <span class="dot"></span>
+        <b>Cross-Asset Alpha</b>
+        <small>⌄</small>
+      </button>
+
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/></svg>
+        <input id="searchInput" placeholder="搜索策略、因子、数据集，或向 AI 提问…" />
+        <span class="kbd">⌘ K</span>
+      </label>
+
+      <div class="status-strip">
+        <div class="status-item"><span class="live"></span><strong>STREAM</strong> 12ms</div>
+        <div class="status-item">GPU <strong>72%</strong></div>
+        <div class="status-item">SYNC <strong>OK</strong></div>
+        <div class="avatar">LY</div>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <button class="sidebar-toggle" id="sidebarToggle" title="展开/收起侧栏">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+
+      <div class="nav-section">
+        <div class="nav-label">RESEARCH</div>
+        <button class="nav-item active" data-nav="总览">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+          <span>研究总览</span><em>LIVE</em>
+        </button>
+        <button class="nav-item" data-nav="数据">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7"/></svg>
+          <span>数据中心</span>
+        </button>
+        <button class="nav-item" data-nav="Notebook">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
+          <span>Research Lab</span>
+        </button>
+        <button class="nav-item" data-nav="模型">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="12" cy="19" r="2"/><path d="m6.6 10.6 3.8-4M13.6 6.4l3.8 4M17.4 13.4l-3.8 4M10.4 17.4l-3.8-4"/></svg>
+          <span>模型图谱</span>
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">EXECUTION</div>
+        <button class="nav-item" data-nav="回测">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+          <span>回测分析</span>
+        </button>
+        <button class="nav-item" data-nav="优化">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+          <span>参数优化</span>
+          <em>8</em>
+        </button>
+        <button class="nav-item" data-nav="实盘">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="M12 3v18M5 8l7-5 7 5M5 16l7 5 7-5"/></svg>
+          <span>实盘监控</span>
+        </button>
+        <button class="nav-item" data-nav="告警">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+          <span>风险告警</span>
+          <em>3</em>
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="nav-item" data-nav="设置">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21h-4v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3v-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V3h4v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.1v4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+          <span>系统设置</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="page-head">
+        <div class="page-title">
+          <div class="eyebrow">STRATEGY WORKSPACE / ALPHA-017</div>
+          <h1>跨资产动量与波动率过滤策略</h1>
+          <p>样本区间 2018.01 — 2026.07 · 24 个市场 · 日频重平衡 · 版本 v2.8.1</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn ai" id="copilotToggle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3a6 6 0 0 0-6 6v2a4 4 0 0 0-2 3.5V17h4v-5H6V9a6 6 0 0 1 12 0v3h-2v5h4v-2.5a4 4 0 0 0-2-3.5V9a6 6 0 0 0-6-6Z"/></svg>
+            AI Copilot
+          </button>
+          <button class="btn" onclick="showToast('已保存当前工作区布局')">保存布局</button>
+          <button class="btn primary" id="runButton">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m8 5 11 7-11 7z"/></svg>
+            运行回测
+          </button>
+        </div>
+      </section>
+
+      <section class="metric-grid">
+        <article class="metric-card glass">
+          <div class="metric-top"><span>累计收益</span><span class="badge">NET</span></div>
+          <div class="metric-value">+184.7<span class="unit">%</span></div>
+          <div class="metric-foot"><span class="up">▲ 12.4%</span><span>较基准</span></div>
+          <svg class="spark" viewBox="0 0 200 34" preserveAspectRatio="none"><path d="M0 30 C15 28,24 23,38 25 S58 14,74 18 S96 11,108 13 S132 7,148 10 S174 3,200 5" fill="none" stroke="#00d7ff" stroke-width="1.5"/><path d="M0 30 C15 28,24 23,38 25 S58 14,74 18 S96 11,108 13 S132 7,148 10 S174 3,200 5 L200 34 L0 34Z" fill="url(#g1)"/><defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#00d7ff" stop-opacity=".18"/><stop offset="1" stop-color="#00d7ff" stop-opacity="0"/></linearGradient></defs></svg>
+        </article>
+        <article class="metric-card glass">
+          <div class="metric-top"><span>年化收益</span><span class="badge">CAGR</span></div>
+          <div class="metric-value">18.42<span class="unit">%</span></div>
+          <div class="metric-foot"><span class="up">▲ 2.18%</span><span>近 12 个月</span></div>
+          <svg class="spark" viewBox="0 0 200 34" preserveAspectRatio="none"><path d="M0 25 C18 27,25 19,40 21 S64 13,80 15 S105 20,120 12 S148 10,162 8 S184 6,200 4" fill="none" stroke="#8b5cf6" stroke-width="1.5"/></svg>
+        </article>
+        <article class="metric-card glass">
+          <div class="metric-top"><span>Sharpe Ratio</span><span class="badge">RF 2.1%</span></div>
+          <div class="metric-value">1.84</div>
+          <div class="metric-foot"><span class="up">▲ 0.16</span><span>稳定提升</span></div>
+          <svg class="spark" viewBox="0 0 200 34" preserveAspectRatio="none"><path d="M0 27 C22 24,34 27,49 20 S76 19,91 16 S115 18,130 12 S154 13,170 8 S190 7,200 5" fill="none" stroke="#b7f34a" stroke-width="1.4"/></svg>
+        </article>
+        <article class="metric-card glass">
+          <div class="metric-top"><span>最大回撤</span><span class="badge">MDD</span></div>
+          <div class="metric-value">-9.73<span class="unit">%</span></div>
+          <div class="metric-foot"><span class="up">▼ 1.2%</span><span>风险收敛</span></div>
+          <svg class="spark" viewBox="0 0 200 34" preserveAspectRatio="none"><path d="M0 9 C16 8,26 10,39 14 S58 11,74 20 S95 13,111 18 S137 24,151 20 S180 26,200 22" fill="none" stroke="#ff5577" stroke-width="1.4"/></svg>
+        </article>
+        <article class="metric-card glass">
+          <div class="metric-top"><span>换手率</span><span class="badge">ANNUAL</span></div>
+          <div class="metric-value">3.28<span class="unit">x</span></div>
+          <div class="metric-foot"><span class="down">▲ 0.21x</span><span>需关注成本</span></div>
+          <svg class="spark" viewBox="0 0 200 34" preserveAspectRatio="none"><path d="M0 24 C14 25,28 18,42 20 S67 17,82 13 S107 14,122 10 S148 12,164 8 S186 10,200 6" fill="none" stroke="#ffb547" stroke-width="1.4"/></svg>
+        </article>
+      </section>
+
+      <section class="workspace-grid">
+        <article class="panel chart-panel glass">
+          <div class="panel-header">
+            <div class="panel-title"><strong>组合净值与基准</strong><span>EQUITY CURVE · DAILY · USD</span></div>
+            <div class="panel-tools">
+              <button class="btn" style="height:28px;padding:0 9px;font-size:8px">1Y</button>
+              <button class="btn" style="height:28px;padding:0 9px;font-size:8px">3Y</button>
+              <button class="btn" style="height:28px;padding:0 9px;font-size:8px;border-color:rgba(0,215,255,.28);color:var(--cyan)">ALL</button>
+              <button class="icon-btn" title="全屏" onclick="showToast('图表已进入聚焦模式（演示）')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg></button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div class="chart-legend">
+              <div class="legend-item"><span class="legend-line"></span>Alpha-017</div>
+              <div class="legend-item"><span class="legend-line bench"></span>60/40 Benchmark</div>
+            </div>
+            <canvas id="equityChart"></canvas>
+          </div>
+          <div class="scanline"></div>
+        </article>
+
+        <article class="panel graph-panel glass">
+          <div class="panel-header">
+            <div class="panel-title"><strong>策略计算图谱</strong><span>PIPELINE · 6 NODES · HEALTHY</span></div>
+            <div class="panel-tools"><button class="icon-btn" onclick="showToast('节点性能指标已刷新')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 11a8 8 0 1 0-2.3 5.7L20 14"/><path d="M20 7v4h-4"/></svg></button></div>
+          </div>
+          <div class="graph-body">
+            <div class="graph-canvas" id="graphCanvas">
+              <div class="node" style="left:2%;top:8%"><div class="node-icon">D</div><div><strong>Market Data</strong><span>24 feeds</span></div></div>
+              <div class="node purple" style="left:37%;top:2%"><div class="node-icon">F</div><div><strong>Feature Lab</strong><span>138 factors</span></div></div>
+              <div class="node purple" style="left:70%;top:15%"><div class="node-icon">M</div><div><strong>Regime Model</strong><span>v2.8.1</span></div></div>
+              <div class="node" style="left:12%;top:57%"><div class="node-icon">S</div><div><strong>Signal Mix</strong><span>6 signals</span></div></div>
+              <div class="node warn" style="left:46%;top:65%"><div class="node-icon">R</div><div><strong>Risk Gate</strong><span>4 limits</span></div></div>
+              <div class="node" style="left:76%;top:58%"><div class="node-icon">O</div><div><strong>Execution</strong><span>simulated</span></div></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel code-panel glass">
+          <div class="panel-header">
+            <div class="panel-title"><strong>strategy.py</strong><span>PYTHON 3.12 · KERNEL READY</span></div>
+            <div class="panel-tools">
+              <button class="btn" style="height:28px;padding:0 10px;font-size:8px" onclick="showToast('代码单元已运行：0 errors')">▶ Run Cell</button>
+              <button class="icon-btn" onclick="showToast('文件已保存')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg></button>
+            </div>
+          </div>
+          <div class="code-layout">
+            <div class="code-editor" aria-label="代码演示区域">
+              <div class="code-row"><span class="line-no">1</span><span class="code-text"><span class="kw">from</span> nebula.research <span class="kw">import</span> <span class="fn">Strategy</span>, <span class="fn">RiskModel</span></span></div>
+              <div class="code-row"><span class="line-no">2</span><span class="code-text"><span class="kw">from</span> nebula.factors <span class="kw">import</span> momentum, volatility</span></div>
+              <div class="code-row"><span class="line-no">3</span><span class="code-text"></span></div>
+              <div class="code-row cursor-line"><span class="line-no">4</span><span class="code-text"><span class="kw">class</span> <span class="fn">CrossAssetAlpha</span>(Strategy):</span></div>
+              <div class="code-row"><span class="line-no">5</span><span class="code-text">    <span class="kw">def</span> <span class="fn">initialize</span>(self):</span></div>
+              <div class="code-row"><span class="line-no">6</span><span class="code-text">        self.universe <span class="op">=</span> <span class="str">"GLOBAL_FUTURES_24"</span></span></div>
+              <div class="code-row"><span class="line-no">7</span><span class="code-text">        self.rebalance <span class="op">=</span> <span class="str">"1D"</span></span></div>
+              <div class="code-row"><span class="line-no">8</span><span class="code-text">        self.lookback <span class="op">=</span> <span class="num">252</span></span></div>
+              <div class="code-row"><span class="line-no">9</span><span class="code-text"></span></div>
+              <div class="code-row"><span class="line-no">10</span><span class="code-text">    <span class="kw">def</span> <span class="fn">generate_signal</span>(self, data):</span></div>
+              <div class="code-row"><span class="line-no">11</span><span class="code-text">        trend <span class="op">=</span> momentum(data, windows<span class="op">=</span>[<span class="num">63</span>, <span class="num">126</span>, <span class="num">252</span>])</span></div>
+              <div class="code-row"><span class="line-no">12</span><span class="code-text">        regime <span class="op">=</span> volatility(data, window<span class="op">=</span><span class="num">21</span>).rank()</span></div>
+              <div class="code-row"><span class="line-no">13</span><span class="code-text">        signal <span class="op">=</span> trend.mean(axis<span class="op">=</span><span class="num">1</span>) <span class="op">*</span> (<span class="num">1</span> <span class="op">-</span> regime)</span></div>
+              <div class="code-row"><span class="line-no">14</span><span class="code-text">        <span class="kw">return</span> self.risk_gate(signal, max_gross<span class="op">=</span><span class="num">1.6</span>)</span></div>
+              <div class="code-row"><span class="line-no">15</span><span class="code-text"></span></div>
+              <div class="code-row"><span class="line-no">16</span><span class="code-text"><span class="cm"># AI note: volatility filter reduced left-tail risk by 18.4%</span></span></div>
+            </div>
+            <aside class="run-meta">
+              <div class="run-chip"><label>LAST RUN</label><strong>02:18.42</strong></div>
+              <div class="run-chip"><label>COMPUTE</label><strong>GPU-A10</strong><div class="progress"><span></span></div></div>
+              <div class="run-chip"><label>STATUS</label><strong style="color:var(--green)">● SUCCESS</strong></div>
+              <div class="run-chip"><label>ARTIFACTS</label><strong>18 files</strong></div>
+            </aside>
+          </div>
+        </article>
+
+        <article class="panel runs-panel glass">
+          <div class="panel-header">
+            <div class="panel-title"><strong>最近实验</strong><span>EXPERIMENT REGISTRY</span></div>
+            <div class="panel-tools"><button class="icon-btn" onclick="showToast('已打开实验对比视图')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div>
+          </div>
+          <div class="runs-body">
+            <div class="run-row head"><span>RUN</span><span>SHARPE</span><span>MDD</span><span>状态</span></div>
+            <div class="run-row"><b>alpha_017_v28</b><span class="up">1.84</span><span>-9.73%</span><span class="status-tag">完成</span></div>
+            <div class="run-row"><b>alpha_017_v27</b><span>1.71</span><span>-10.2%</span><span class="status-tag">完成</span></div>
+            <div class="run-row"><b>vol_filter_ab</b><span>1.63</span><span>-8.91%</span><span class="status-tag wait">队列</span></div>
+            <div class="run-row"><b>regime_hmm_04</b><span>1.57</span><span>-11.4%</span><span class="status-tag">完成</span></div>
+            <div class="run-row"><b>cost_stress_12</b><span>1.49</span><span>-9.98%</span><span class="status-tag">完成</span></div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <aside class="copilot">
+      <div class="copilot-inner">
+        <div class="copilot-head">
+          <div class="ai-orb"></div>
+          <div class="copilot-title"><strong>Research Copilot</strong><span>CONTEXT-AWARE · MODEL RQ-4</span></div>
+          <button class="icon-btn" id="closeCopilot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+        </div>
+        <div class="copilot-scroll">
+          <div class="ai-context">
+            <div class="label">ACTIVE CONTEXT</div>
+            <p>正在分析 <strong>Alpha-017 v2.8.1</strong> 的回测结果、策略代码、特征漂移与成本敏感性。</p>
+          </div>
+
+          <div class="message">
+            <div class="message-meta"><span class="mini-orb"></span>RESEARCH COPILOT · 14:28</div>
+            <div class="bubble">
+              最新版本的收益改善主要来自<strong>波动率过滤器</strong>，而非动量信号本身。样本外 Sharpe 提升 0.13，但在高通胀阶段出现短暂失效。
+              <div class="insight-card">
+                <div class="insight-row"><span>波动率过滤贡献</span><span class="up">+8.7%</span></div>
+                <div class="insight-row"><span>交易成本敏感度</span><span style="color:var(--orange)">中等</span></div>
+                <div class="insight-row"><span>特征漂移风险</span><span class="up">低</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="message">
+            <div class="message-meta">YOU · 14:29</div>
+            <div class="bubble">下一步最值得做的稳健性检验是什么？</div>
+          </div>
+
+          <div class="message">
+            <div class="message-meta"><span class="mini-orb"></span>RESEARCH COPILOT · 14:29</div>
+            <div class="bubble">
+              建议优先做三项：<strong>滚动窗口重估</strong>、<strong>成本 ×2 压力测试</strong>，以及按通胀状态分层的子样本检验。它们能最快判断当前提升是否依赖特定市场环境。
+            </div>
+          </div>
+
+          <div class="suggestions">
+            <button class="suggestion">生成稳健性检验</button>
+            <button class="suggestion">解释回撤来源</button>
+            <button class="suggestion">比较 v2.7 / v2.8</button>
+            <button class="suggestion">检查未来函数</button>
+          </div>
+        </div>
+        <div class="copilot-input">
+          <div class="prompt-box">
+            <textarea id="promptText" placeholder="询问策略表现、代码、数据或风险…"></textarea>
+            <div class="prompt-actions"><span>⌘ Enter 发送</span><button class="send-btn" id="sendPrompt"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="m4 4 16 8-16 8 3-8z"/></svg></button></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast"><i></i><span id="toastText">操作成功</span></div>
+
+  <script>
+    const app = document.getElementById('app');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const copilotToggle = document.getElementById('copilotToggle');
+    const closeCopilot = document.getElementById('closeCopilot');
+    const runButton = document.getElementById('runButton');
+    const searchInput = document.getElementById('searchInput');
+    const promptText = document.getElementById('promptText');
+    const sendPrompt = document.getElementById('sendPrompt');
+
+    sidebarToggle.addEventListener('click', () => {
+      app.classList.toggle('sidebar-open');
+      sidebarToggle.querySelector('svg').style.transform = app.classList.contains('sidebar-open') ? 'rotate(180deg)' : '';
+      setTimeout(drawChart, 300);
+    });
+
+    function toggleCopilot(forceOpen = false) {
+      if (forceOpen) app.classList.remove('copilot-closed');
+      else app.classList.toggle('copilot-closed');
+      setTimeout(drawChart, 260);
+    }
+    copilotToggle.addEventListener('click', () => toggleCopilot());
+    closeCopilot.addEventListener('click', () => toggleCopilot());
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        showToast(`已切换至「${item.dataset.nav || '模块'}」视图`);
+      });
+    });
+
+    document.querySelectorAll('.suggestion').forEach(btn => {
+      btn.addEventListener('click', () => {
+        promptText.value = btn.textContent;
+        promptText.focus();
+      });
+    });
+
+    runButton.addEventListener('click', () => {
+      const original = runButton.innerHTML;
+      runButton.disabled = true;
+      runButton.innerHTML = '<span style="width:9px;height:9px;border:1.5px solid #031019;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin .7s linear infinite"></span> 正在运行';
+      const style = document.createElement('style');
+      style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+      document.head.appendChild(style);
+      setTimeout(() => {
+        runButton.disabled = false;
+        runButton.innerHTML = original;
+        showToast('回测已完成：Sharpe 1.86，最大回撤 -9.61%');
+      }, 1700);
+    });
+
+    function submitPrompt() {
+      const value = promptText.value.trim();
+      if (!value) return;
+      showToast(`AI 已接收问题：「${value.slice(0, 18)}${value.length > 18 ? '…' : ''}」`);
+      promptText.value = '';
+    }
+    sendPrompt.addEventListener('click', submitPrompt);
+    promptText.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submitPrompt();
+    });
+
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInput.focus();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && document.activeElement !== promptText) {
+        runButton.click();
+      }
+    });
+
+    let toastTimer;
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastText').textContent = text;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+    window.showToast = showToast;
+
+    // Canvas equity chart — pure JS, no external dependency.
+    const canvas = document.getElementById('equityChart');
+    const ctx = canvas.getContext('2d');
+    const equity = [100,103,101,106,111,109,115,118,116,122,129,127,135,142,139,146,151,149,158,166,162,173,181,179,188,198,194,207,219,226,221,235,247,243,258,271,266,279,291,285,302,318,326,321,337,349,356];
+    const benchmark = [100,101,102,104,105,104,107,108,109,111,114,113,116,118,117,120,122,121,124,127,126,129,131,132,134,136,135,138,140,142,141,144,146,145,148,151,150,153,155,154,157,159,160,158,161,164,166];
+
+    function drawChart() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, rect.width * dpr);
+      canvas.height = Math.max(1, rect.height * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      const w = rect.width, h = rect.height;
+      ctx.clearRect(0,0,w,h);
+      const pad = {l:40,r:28,t:34,b:28};
+      const plotW = w-pad.l-pad.r, plotH = h-pad.t-pad.b;
+
+      ctx.font = '8px SFMono-Regular, Consolas, monospace';
+      ctx.fillStyle = '#53647b';
+      ctx.strokeStyle = 'rgba(95,126,166,.11)';
+      ctx.lineWidth = 1;
+      for(let i=0;i<5;i++){
+        const y = pad.t + plotH*(i/4);
+        ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(w-pad.r,y); ctx.stroke();
+        ctx.fillText(String(360-i*65), 4, y+3);
+      }
+      for(let i=0;i<7;i++){
+        const x=pad.l+plotW*(i/6);
+        ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,h-pad.b); ctx.stroke();
+      }
+      ['2018','2019','2020','2021','2022','2024','2026'].forEach((t,i)=>{
+        const x=pad.l+plotW*(i/6);
+        ctx.fillStyle='#4f6075';
+        ctx.fillText(t,x-11,h-8);
+      });
+
+      const min=90,max=365;
+      const mapX=i=>pad.l+(i/(equity.length-1))*plotW;
+      const mapY=v=>pad.t+(1-(v-min)/(max-min))*plotH;
+
+      function path(data, stroke, width, glow=false, dashed=false){
+        ctx.save();
+        ctx.beginPath();
+        data.forEach((v,i)=>{ const x=mapX(i),y=mapY(v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+        ctx.strokeStyle=stroke; ctx.lineWidth=width; ctx.lineJoin='round'; ctx.lineCap='round';
+        if(dashed) ctx.setLineDash([5,5]);
+        if(glow){ ctx.shadowColor=stroke; ctx.shadowBlur=12; }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      const grad = ctx.createLinearGradient(0,pad.t,0,h-pad.b);
+      grad.addColorStop(0,'rgba(0,215,255,.22)');
+      grad.addColorStop(1,'rgba(0,215,255,0)');
+      ctx.beginPath();
+      equity.forEach((v,i)=>{ const x=mapX(i),y=mapY(v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+      ctx.lineTo(mapX(equity.length-1),h-pad.b); ctx.lineTo(mapX(0),h-pad.b); ctx.closePath();
+      ctx.fillStyle=grad; ctx.fill();
+      path(benchmark,'#69788e',1.2,false,true);
+      path(equity,'#00d7ff',1.8,true,false);
+
+      const endX=mapX(equity.length-1), endY=mapY(equity[equity.length-1]);
+      ctx.fillStyle='#00d7ff'; ctx.shadowColor='#00d7ff'; ctx.shadowBlur=14;
+      ctx.beginPath(); ctx.arc(endX,endY,3.2,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle='rgba(0,215,255,.12)'; ctx.beginPath(); ctx.arc(endX,endY,8,0,Math.PI*2); ctx.fill();
+
+      const xBand1=mapX(20), xBand2=mapX(23);
+      ctx.fillStyle='rgba(255,85,119,.035)'; ctx.fillRect(xBand1,pad.t,xBand2-xBand1,plotH);
+      ctx.fillStyle='#7f5c69'; ctx.fillText('Stress',xBand1+5,pad.t+12);
+    }
+
+    function connectNodes() {
+      const graph = document.getElementById('graphCanvas');
+      graph.querySelectorAll('.flow-line').forEach(el=>el.remove());
+      const nodes=[...graph.querySelectorAll('.node')];
+      const pairs=[[0,1],[1,2],[0,3],[3,4],[1,4],[2,5],[4,5]];
+      const gr=graph.getBoundingClientRect();
+      pairs.forEach(([a,b])=>{
+        const ra=nodes[a].getBoundingClientRect(), rb=nodes[b].getBoundingClientRect();
+        const x1=ra.left-gr.left+ra.width/2, y1=ra.top-gr.top+ra.height/2;
+        const x2=rb.left-gr.left+rb.width/2, y2=rb.top-gr.top+rb.height/2;
+        const dx=x2-x1, dy=y2-y1;
+        const len=Math.hypot(dx,dy), ang=Math.atan2(dy,dx)*180/Math.PI;
+        const line=document.createElement('div');
+        line.className='flow-line';
+        line.style.width=`${len}px`; line.style.left=`${x1}px`; line.style.top=`${y1}px`; line.style.transform=`rotate(${ang}deg)`;
+        graph.prepend(line);
+      });
+    }
+
+    window.addEventListener('resize',()=>{ drawChart(); connectNodes(); });
+    window.addEventListener('load',()=>{ drawChart(); connectNodes(); setTimeout(()=>showToast('Future Dark UI Demo 已加载'),500); });
+  </script>
+</body>
+</html>

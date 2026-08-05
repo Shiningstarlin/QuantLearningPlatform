@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.backtest import BacktestRun, BacktestTask
 from app.models.user import User
-from app.routers.deps import get_current_user
+from app.routers.deps import get_current_or_guest_user
 from app.schemas.backtest import (
     BacktestAssetRead,
     BacktestBatchCreate,
@@ -24,19 +24,19 @@ router = APIRouter()
 
 
 @router.get("", response_model=list[BacktestTaskRead])
-def list_backtests(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> list[BacktestTask]:
+def list_backtests(user: User = Depends(get_current_or_guest_user), db: Session = Depends(get_db)) -> list[BacktestTask]:
     return BacktestService(db).list_tasks(user.id)
 
 
 @router.get("/assets", response_model=list[BacktestAssetRead])
-def list_backtest_assets(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> list[BacktestAssetRead]:
+def list_backtest_assets(user: User = Depends(get_current_or_guest_user), db: Session = Depends(get_db)) -> list[BacktestAssetRead]:
     return BacktestService(db).list_assets()
 
 
 @router.post("", response_model=BacktestRunRead)
 def create_backtest(
     payload: BacktestCreate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_current_or_guest_user),
     db: Session = Depends(get_db),
 ) -> BacktestRun:
     return BacktestService(db).create_and_run(user.id, payload)
@@ -45,7 +45,7 @@ def create_backtest(
 @router.post("/batch", response_model=BacktestBatchRead)
 def create_backtest_batch(
     payload: BacktestBatchCreate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_current_or_guest_user),
     db: Session = Depends(get_db),
 ) -> BacktestBatchRead:
     task, runs = BacktestService(db).create_batch_and_run(user.id, payload)
@@ -58,7 +58,7 @@ def preview_backtest_history(
     yfinance_symbol: str | None = Query(default=None),
     start_date: date = Query(),
     end_date: date = Query(),
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_current_or_guest_user),
     db: Session = Depends(get_db),
 ) -> BacktestPreviewRead:
     return BacktestService(db).preview_history(market_asset_id, yfinance_symbol, start_date, end_date)
@@ -67,7 +67,7 @@ def preview_backtest_history(
 @router.get("/compare", response_model=BacktestComparisonRead)
 def compare_backtests(
     ids: str = Query(default=""),
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_current_or_guest_user),
     db: Session = Depends(get_db),
 ) -> BacktestComparisonRead:
     parsed_ids = []
@@ -82,7 +82,7 @@ def compare_backtests(
 @router.get("/{backtest_id}", response_model=BacktestDetailRead)
 def get_backtest(
     backtest_id: int,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_current_or_guest_user),
     db: Session = Depends(get_db),
 ) -> BacktestDetailRead:
     run = BacktestService(db).get_run(user.id, backtest_id)

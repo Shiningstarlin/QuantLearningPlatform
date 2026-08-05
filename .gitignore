@@ -45,6 +45,7 @@ referencecode/
 .agents/
 .codex/
 error.txt
+test.py
 
 # OS/editor
 .DS_Store

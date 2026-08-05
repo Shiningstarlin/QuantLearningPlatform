@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException
 from sqlalchemy import func, select
@@ -9,8 +10,27 @@ from app.models.asset import WatchAsset
 from app.models.market import MarketAsset
 from app.market_data.factory import get_market_data_provider
 from app.models.position import Position
-from app.models.simulation import ControlEvent, PaperAccount, SimulatedAccount, SimulationTask
-from app.schemas.simulation import ControlRequest, InvestmentProcessCreate, ManualExposureUpdate, PaperAccountCreate, SimulationTaskCreate
+from app.models.market import MarketQuote
+from app.models.simulation import (
+    AccountDailySummary,
+    AccountMonthlySummary,
+    ControlEvent,
+    PaperAccount,
+    SimulatedAccount,
+    SimulationTask,
+    TradeLog,
+)
+from app.schemas.simulation import (
+    AccountOverallPerformanceRead,
+    AccountDailySummaryRead,
+    AccountMonthlySummaryRead,
+    ControlRequest,
+    InvestmentProcessCreate,
+    ManualExposureUpdate,
+    PaperAccountCreate,
+    PaperAccountPerformanceRead,
+    SimulationTaskCreate,
+)
 from app.schemas.trading import OrderIntent
 from app.services.fx import FxService
 from app.simulation.engine import SimulationEngine
@@ -19,6 +39,8 @@ from app.simulation.engine import SimulationEngine
 class SimulationTaskService:
     MAX_ACCOUNTS_PER_USER = 3
     DEFAULT_INITIAL_HKD = 1_000_000
+    SETTLEMENT_ZONE = ZoneInfo("Asia/Shanghai")
+    SETTLEMENT_HOUR = 6
 
     def __init__(self, db: Session):
         self.db = db
@@ -37,6 +59,214 @@ class SimulationTaskService:
             self.refresh_paper_account(account)
         self.db.commit()
         return accounts
+
+    def get_account_performance(self, user_id: int, account_id: int, limit: int = 90) -> PaperAccountPerformanceRead:
+        account = self._load_account(user_id, account_id)
+        self.capture_account_snapshot(account)
+        daily = list(
+            self.db.scalars(
+                select(AccountDailySummary)
+                .where(AccountDailySummary.paper_account_id == account.id)
+                .order_by(AccountDailySummary.summary_date.desc())
+                .limit(max(1, min(limit, 365)))
+            )
+        )[::-1]
+        monthly = list(
+            self.db.scalars(
+                select(AccountMonthlySummary)
+                .where(AccountMonthlySummary.paper_account_id == account.id)
+                .order_by(AccountMonthlySummary.year.desc(), AccountMonthlySummary.month.desc())
+                .limit(24)
+            )
+        )[::-1]
+        latest_equity = account.equity_hkd
+        equity_series = [account.initial_equity_hkd, *(row.equity_hkd for row in daily), latest_equity]
+        peak_equity = max(equity_series) if equity_series else latest_equity
+        max_drawdown = self._max_drawdown(equity_series)
+        trade_count = self._trade_count(account.id)
+        total_pnl = latest_equity - account.initial_equity_hkd
+        self.db.commit()
+        return PaperAccountPerformanceRead(
+            settlement_timezone="Asia/Shanghai",
+            settlement_time="06:00",
+            as_of=datetime.now(timezone.utc),
+            overall=AccountOverallPerformanceRead(
+                initial_equity_hkd=account.initial_equity_hkd,
+                current_equity_hkd=latest_equity,
+                total_pnl_hkd=total_pnl,
+                total_return=total_pnl / account.initial_equity_hkd if account.initial_equity_hkd else 0,
+                peak_equity_hkd=peak_equity,
+                max_drawdown=max_drawdown,
+                total_trade_count=trade_count,
+            ),
+            daily=[AccountDailySummaryRead.model_validate(row) for row in daily],
+            monthly=[AccountMonthlySummaryRead.model_validate(row) for row in monthly],
+        )
+
+    def capture_all_accounts(self) -> None:
+        accounts = list(
+            self.db.scalars(
+                select(PaperAccount).options(
+                    selectinload(PaperAccount.tasks).selectinload(SimulationTask.account),
+                    selectinload(PaperAccount.tasks).selectinload(SimulationTask.positions),
+                )
+            )
+        )
+        for account in accounts:
+            self.capture_account_snapshot(account)
+        self.db.commit()
+
+    def capture_account_snapshot(self, account: PaperAccount) -> AccountDailySummary:
+        self._mark_to_market(account)
+        settlement_date = self._settlement_date()
+        previous = self.db.scalar(
+            select(AccountDailySummary)
+            .where(
+                AccountDailySummary.paper_account_id == account.id,
+                AccountDailySummary.summary_date < settlement_date,
+            )
+            .order_by(AccountDailySummary.summary_date.desc())
+            .limit(1)
+        )
+        previous_equity = previous.equity_hkd if previous is not None else account.initial_equity_hkd
+        summary = self.db.scalar(
+            select(AccountDailySummary).where(
+                AccountDailySummary.paper_account_id == account.id,
+                AccountDailySummary.summary_date == settlement_date,
+            )
+        )
+        if summary is None:
+            summary = AccountDailySummary(paper_account_id=account.id, summary_date=settlement_date)
+            self.db.add(summary)
+
+        trade_count = self._trade_count(account.id, self._settlement_start_utc(settlement_date))
+        summary.snapshot_at = datetime.now(timezone.utc)
+        summary.cash_hkd = account.cash_hkd
+        summary.market_value_hkd = account.market_value_hkd
+        summary.equity_hkd = account.equity_hkd
+        summary.net_cash_flow_hkd = 0
+        summary.pnl_hkd = account.equity_hkd - previous_equity
+        summary.return_rate = summary.pnl_hkd / previous_equity if previous_equity else 0
+        summary.cumulative_pnl_hkd = account.equity_hkd - account.initial_equity_hkd
+        summary.trade_count = trade_count
+        self.db.flush()
+        self._upsert_monthly_summary(account, settlement_date)
+        self.db.flush()
+        return summary
+
+    def _upsert_monthly_summary(self, account: PaperAccount, settlement_date: date) -> None:
+        monthly = self.db.scalar(
+            select(AccountMonthlySummary).where(
+                AccountMonthlySummary.paper_account_id == account.id,
+                AccountMonthlySummary.year == settlement_date.year,
+                AccountMonthlySummary.month == settlement_date.month,
+            )
+        )
+        if monthly is None:
+            monthly = AccountMonthlySummary(
+                paper_account_id=account.id,
+                year=settlement_date.year,
+                month=settlement_date.month,
+            )
+            self.db.add(monthly)
+
+        month_start = date(settlement_date.year, settlement_date.month, 1)
+        prior = self.db.scalar(
+            select(AccountDailySummary)
+            .where(
+                AccountDailySummary.paper_account_id == account.id,
+                AccountDailySummary.summary_date < month_start,
+            )
+            .order_by(AccountDailySummary.summary_date.desc())
+            .limit(1)
+        )
+        month_rows = list(
+            self.db.scalars(
+                select(AccountDailySummary)
+                .where(
+                    AccountDailySummary.paper_account_id == account.id,
+                    AccountDailySummary.summary_date >= month_start,
+                    AccountDailySummary.summary_date <= settlement_date,
+                )
+                .order_by(AccountDailySummary.summary_date.asc())
+            )
+        )
+        start_equity = prior.equity_hkd if prior is not None else account.initial_equity_hkd
+        equities = [start_equity, *(row.equity_hkd for row in month_rows)]
+        end_equity = equities[-1] if equities else account.equity_hkd
+        pnl = end_equity - start_equity
+        monthly.start_equity_hkd = start_equity
+        monthly.end_equity_hkd = end_equity
+        monthly.net_cash_flow_hkd = 0
+        monthly.pnl_hkd = pnl
+        monthly.return_rate = pnl / start_equity if start_equity else 0
+        monthly.max_drawdown = self._max_drawdown(equities)
+        monthly.trade_count = sum(row.trade_count for row in month_rows)
+        monthly.updated_at = datetime.now(timezone.utc)
+
+    def _mark_to_market(self, account: PaperAccount) -> None:
+        task_ids = [task.id for task in account.tasks if task.account is not None and task.status != "ended"]
+        asset_ids = [task.market_asset_id for task in account.tasks if task.market_asset_id is not None and task.id in task_ids]
+        latest_by_asset: dict[int, MarketQuote] = {}
+        if asset_ids:
+            ranked = (
+                select(
+                    MarketQuote.id.label("quote_id"),
+                    func.row_number()
+                    .over(partition_by=MarketQuote.asset_id, order_by=[MarketQuote.quote_time.desc(), MarketQuote.id.desc()])
+                    .label("rank"),
+                )
+                .where(MarketQuote.asset_id.in_(asset_ids))
+                .subquery()
+            )
+            quotes = self.db.scalars(
+                select(MarketQuote).join(ranked, MarketQuote.id == ranked.c.quote_id).where(ranked.c.rank == 1)
+            )
+            latest_by_asset = {quote.asset_id: quote for quote in quotes}
+
+        for task in account.tasks:
+            if task.account is None or task.status == "ended":
+                continue
+            quote = latest_by_asset.get(task.market_asset_id)
+            if quote is not None:
+                for position in task.positions:
+                    if position.quantity > 0:
+                        position.last_price = quote.price
+                        position.market_value = position.quantity * quote.price
+            task.account.market_value = sum(position.market_value for position in task.positions)
+            task.account.equity = task.account.cash + task.account.frozen_cash + task.account.market_value
+            task.account.updated_at = datetime.now(timezone.utc)
+        self.refresh_paper_account(account)
+
+    def _trade_count(self, account_id: int, since: datetime | None = None) -> int:
+        statement = (
+            select(func.count(TradeLog.id))
+            .join(SimulationTask, SimulationTask.id == TradeLog.task_id)
+            .where(SimulationTask.paper_account_id == account_id)
+        )
+        if since is not None:
+            statement = statement.where(TradeLog.traded_at >= since)
+        return int(self.db.scalar(statement) or 0)
+
+    @classmethod
+    def _settlement_date(cls, now: datetime | None = None) -> date:
+        local_now = (now or datetime.now(timezone.utc)).astimezone(cls.SETTLEMENT_ZONE)
+        return local_now.date() if local_now.hour >= cls.SETTLEMENT_HOUR else local_now.date() - timedelta(days=1)
+
+    @classmethod
+    def _settlement_start_utc(cls, settlement_date: date) -> datetime:
+        local_start = datetime.combine(settlement_date, time(cls.SETTLEMENT_HOUR), tzinfo=cls.SETTLEMENT_ZONE)
+        return local_start.astimezone(timezone.utc)
+
+    @staticmethod
+    def _max_drawdown(equities: list[float]) -> float:
+        peak = 0.0
+        max_drawdown = 0.0
+        for equity in equities:
+            peak = max(peak, equity)
+            if peak:
+                max_drawdown = min(max_drawdown, (equity - peak) / peak)
+        return max_drawdown
 
     def create_account(self, user_id: int, payload: PaperAccountCreate) -> PaperAccount:
         account_count = self.db.scalar(select(func.count()).select_from(PaperAccount).where(PaperAccount.user_id == user_id))

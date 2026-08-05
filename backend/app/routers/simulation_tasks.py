@@ -12,6 +12,7 @@ from app.schemas.simulation import (
     ManualExposureUpdate,
     PaperAccountCreate,
     PaperAccountRead,
+    PaperAccountPerformanceRead,
     SimulationFeeSchedulesRead,
     SimulationTaskCreate,
     SimulationTaskRead,
@@ -44,6 +45,15 @@ def create_process(
     db: Session = Depends(get_db),
 ) -> SimulationTask:
     return SimulationTaskService(db).create_process(user.id, account_id, payload)
+
+
+@router.get("/accounts/{account_id}/performance", response_model=PaperAccountPerformanceRead)
+def account_performance(
+    account_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PaperAccountPerformanceRead:
+    return SimulationTaskService(db).get_account_performance(user.id, account_id)
 
 
 @router.get("/fees", response_model=SimulationFeeSchedulesRead)

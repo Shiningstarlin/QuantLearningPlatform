@@ -1,41 +1,87 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { apiRequest, MarketBoardRow } from "../lib/api";
 import { LineChart } from "../ui/LineChart";
 import { PageHeader } from "../ui/PageHeader";
 
+const QUOTE_REFRESH_INTERVAL_MS = 60_000;
+
 export function MarketBoardPage() {
   const [rows, setRows] = useState<MarketBoardRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [feedHealthy, setFeedHealthy] = useState<boolean | null>(null);
+  const [latestQuoteAge, setLatestQuoteAge] = useState<number | null>(null);
+  const latestQuoteTimeRef = useRef<number | null>(null);
+  const allMarketsClosedRef = useRef(false);
 
-  async function loadQuotes(refresh = false) {
-    setLoading(true);
+  function refreshQuoteAge(currentTime = Date.now()) {
+    if (allMarketsClosedRef.current) {
+      return;
+    }
+    const latestQuoteTime = latestQuoteTimeRef.current;
+    setLatestQuoteAge(latestQuoteTime === null ? null : quoteAgeSecondsFromTimestamp(latestQuoteTime, currentTime));
+  }
+
+  async function loadQuotes(showLoading = false) {
+    if (showLoading) {
+      setLoading(true);
+    }
     setError("");
     try {
-      if (refresh) {
-        await apiRequest<{ refreshed: number }>("/api/market-board/refresh", { method: "POST" });
-      }
       const data = await apiRequest<MarketBoardRow[]>("/api/market-board/quotes?limit=40");
       setRows(data);
+      const allMarketsClosed = areAllMarketsClosed(data);
+      allMarketsClosedRef.current = allMarketsClosed;
+      if (!allMarketsClosed) {
+        const latestQuoteTime = latestQuoteTimestamp(data);
+        if (latestQuoteTime !== null) {
+          latestQuoteTimeRef.current = latestQuoteTime;
+        }
+        refreshQuoteAge();
+      }
+      setFeedHealthy(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "加载行情失败");
+      setFeedHealthy(false);
+      refreshQuoteAge();
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }
 
   useEffect(() => {
-    loadQuotes();
+    loadQuotes(true);
+    const refreshTimer = window.setInterval(() => loadQuotes(false), QUOTE_REFRESH_INTERVAL_MS);
+    return () => {
+      window.clearInterval(refreshTimer);
+    };
   }, []);
+
+  const allMarketsClosed = areAllMarketsClosed(rows);
+  const feedStatus = feedHealthy === false ? "error" : feedHealthy === true ? "healthy" : "pending";
 
   return (
     <>
-      <PageHeader title="行情看板" subtitle="仅使用 Futu OpenAPI 获取报价，后台会定期保存报价。">
-        <button className="button" type="button" onClick={() => loadQuotes(true)} disabled={loading}>
-          {loading ? "刷新中..." : "刷新报价"}
-        </button>
+      <PageHeader title="行情看板" subtitle="读取后台已保存报价；后台任务会定期拉取 Futu OpenAPI 并写入数据库。">
+        <div className={`market-feed-status ${feedStatus}`} aria-live="polite">
+          <span className="breathing-light" aria-hidden="true" />
+          <span>
+            {feedHealthy === false ? "后端通信异常" : feedHealthy === true ? "后端通信正常" : "正在连接行情服务"}
+          </span>
+          <strong>
+            {latestQuoteAge === null
+              ? allMarketsClosed
+                ? "全部资产休市，暂无报价状态"
+                : "暂无报价时间"
+              : allMarketsClosed
+                ? `休市中，保持上次更新 · ${formatQuoteAge(latestQuoteAge)}`
+                : `最新报价延迟 ${formatQuoteAge(latestQuoteAge)}`}
+          </strong>
+        </div>
       </PageHeader>
 
       {error ? <div className="error-text">{error}</div> : null}
@@ -57,7 +103,15 @@ export function MarketBoardPage() {
             </div>
             <LineChart points={row.history} compact height={96} />
             <div className="market-meta market-card-footer">
-              <span>{row.latest_quote ? new Date(row.latest_quote.quote_time).toLocaleString() : "尚未刷新"}</span>
+              <span>
+                {row.latest_quote ? (
+                  <>
+                    更新于 {formatQuoteTime(row.latest_quote.quote_time)}
+                  </>
+                ) : (
+                  "暂无保存报价"
+                )}
+              </span>
               {row.market_status ? (
                 <span className={row.market_status.is_open ? "status-pill open" : "status-pill closed"}>
                   {row.market_status.market} · {row.market_status.is_open ? "开盘" : "休市"}
@@ -69,4 +123,42 @@ export function MarketBoardPage() {
       </section>
     </>
   );
+}
+
+function areAllMarketsClosed(rows: MarketBoardRow[]) {
+  return rows.length > 0 && rows.every((row) => row.market_status?.is_open === false);
+}
+
+function latestQuoteTimestamp(rows: MarketBoardRow[]) {
+  return rows.reduce<number | null>((latest, row) => {
+    if (!row.latest_quote) {
+      return latest;
+    }
+    const timestamp = parseQuoteTime(row.latest_quote.quote_time).getTime();
+    if (Number.isNaN(timestamp)) {
+      return latest;
+    }
+    return latest === null ? timestamp : Math.max(latest, timestamp);
+  }, null);
+}
+
+function quoteAgeSecondsFromTimestamp(timestamp: number, currentTime: number) {
+  return Math.max(0, Math.floor((currentTime - timestamp) / 1000));
+}
+
+function parseQuoteTime(value: string) {
+  const hasTimezone = /[zZ]|[+-]\d{2}:?\d{2}$/.test(value);
+  return new Date(hasTimezone ? value : `${value}Z`);
+}
+
+function formatQuoteTime(value: string) {
+  const date = parseQuoteTime(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+}
+
+function formatQuoteAge(age: number | null) {
+  if (age === null) {
+    return "--";
+  }
+  return `${age} 秒`;
 }

@@ -1,4 +1,14 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const GUEST_SESSION_KEY = "quant_guest_session_id";
+
+export function getGuestSessionId() {
+  let guestSessionId = sessionStorage.getItem(GUEST_SESSION_KEY);
+  if (!guestSessionId) {
+    guestSessionId = crypto.randomUUID?.() ?? `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    sessionStorage.setItem(GUEST_SESSION_KEY, guestSessionId);
+  }
+  return guestSessionId;
+}
 
 export function getToken() {
   return localStorage.getItem("access_token");
@@ -20,6 +30,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
+  headers.set("X-Guest-Session", getGuestSessionId());
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -90,6 +101,48 @@ export type PaperAccount = {
   created_at: string;
   updated_at: string;
   tasks: SimulationTask[];
+};
+
+export type AccountDailySummary = {
+  summary_date: string;
+  snapshot_at: string;
+  cash_hkd: number;
+  market_value_hkd: number;
+  equity_hkd: number;
+  net_cash_flow_hkd: number;
+  pnl_hkd: number;
+  return_rate: number;
+  cumulative_pnl_hkd: number;
+  trade_count: number;
+};
+
+export type AccountMonthlySummary = {
+  year: number;
+  month: number;
+  start_equity_hkd: number;
+  end_equity_hkd: number;
+  net_cash_flow_hkd: number;
+  pnl_hkd: number;
+  return_rate: number;
+  max_drawdown: number;
+  trade_count: number;
+};
+
+export type AccountPerformance = {
+  settlement_timezone: string;
+  settlement_time: string;
+  as_of: string;
+  overall: {
+    initial_equity_hkd: number;
+    current_equity_hkd: number;
+    total_pnl_hkd: number;
+    total_return: number;
+    peak_equity_hkd: number;
+    max_drawdown: number;
+    total_trade_count: number;
+  };
+  daily: AccountDailySummary[];
+  monthly: AccountMonthlySummary[];
 };
 
 export type FeeSchedule = {
@@ -306,4 +359,60 @@ export type BacktestBatch = {
 
 export type BacktestComparison = {
   runs: BacktestRun[];
+};
+
+export type InsightScore = {
+  score: number | null;
+  status: "ready" | "not_configured" | "unavailable" | "error";
+  summary: string;
+  model?: string | null;
+};
+
+export type OverallInsightScore = InsightScore;
+
+export type InsightFactor = {
+  key: string;
+  label: string;
+  category: "quant" | "financial" | "macro" | "flow" | "earnings";
+  value: number | string | null;
+  unit: string;
+  observed_at?: string | null;
+  period?: string | null;
+  source: string;
+  note: string;
+  ai: InsightScore;
+};
+
+export type InsightNews = {
+  title: string;
+  subtype: string;
+  source: string;
+  publish_time: string;
+  url: string;
+  related_securities: string[];
+};
+
+export type FactorInsights = {
+  asset: MarketAsset;
+  start_date: string;
+  end_date: string;
+  generated_at: string;
+  factors: InsightFactor[];
+  market_sentiment: {
+    title: string;
+    source: string;
+    available: boolean;
+    indicators: InsightFactor[];
+    ai: InsightScore;
+  };
+  asset_news: {
+    title: string;
+    source: string;
+    available: boolean;
+    items: InsightNews[];
+    ai: InsightScore;
+  };
+  overall: OverallInsightScore;
+  ai_configured: boolean;
+  warnings: string[];
 };

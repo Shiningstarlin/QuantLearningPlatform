@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -25,6 +25,8 @@ class PaperAccount(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     tasks = relationship("SimulationTask", back_populates="paper_account", cascade="all, delete-orphan")
+    daily_summaries = relationship("AccountDailySummary", back_populates="paper_account", cascade="all, delete-orphan")
+    monthly_summaries = relationship("AccountMonthlySummary", back_populates="paper_account", cascade="all, delete-orphan")
 
 
 class SimulationTask(Base):
@@ -138,3 +140,49 @@ class MonthlySummary(Base):
     monthly_return: Mapped[float] = mapped_column(Float, default=0)
     max_drawdown: Mapped[float] = mapped_column(Float, default=0)
     trade_count: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class AccountDailySummary(Base):
+    __tablename__ = "account_daily_summaries"
+    __table_args__ = (
+        UniqueConstraint("paper_account_id", "summary_date", name="uq_account_daily_summary_date"),
+        Index("ix_account_daily_summaries_account_date", "paper_account_id", "summary_date"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    paper_account_id: Mapped[int] = mapped_column(ForeignKey("paper_accounts.id"), index=True)
+    summary_date: Mapped[date] = mapped_column(Date, index=True)
+    snapshot_at: Mapped[datetime] = mapped_column(DateTime)
+    cash_hkd: Mapped[float] = mapped_column(Float)
+    market_value_hkd: Mapped[float] = mapped_column(Float)
+    equity_hkd: Mapped[float] = mapped_column(Float)
+    net_cash_flow_hkd: Mapped[float] = mapped_column(Float, default=0)
+    pnl_hkd: Mapped[float] = mapped_column(Float, default=0)
+    return_rate: Mapped[float] = mapped_column(Float, default=0)
+    cumulative_pnl_hkd: Mapped[float] = mapped_column(Float, default=0)
+    trade_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    paper_account = relationship("PaperAccount", back_populates="daily_summaries")
+
+
+class AccountMonthlySummary(Base):
+    __tablename__ = "account_monthly_summaries"
+    __table_args__ = (
+        UniqueConstraint("paper_account_id", "year", "month", name="uq_account_monthly_summary_period"),
+        Index("ix_account_monthly_summaries_account_period", "paper_account_id", "year", "month"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    paper_account_id: Mapped[int] = mapped_column(ForeignKey("paper_accounts.id"), index=True)
+    year: Mapped[int] = mapped_column(Integer)
+    month: Mapped[int] = mapped_column(Integer)
+    start_equity_hkd: Mapped[float] = mapped_column(Float)
+    end_equity_hkd: Mapped[float] = mapped_column(Float)
+    net_cash_flow_hkd: Mapped[float] = mapped_column(Float, default=0)
+    pnl_hkd: Mapped[float] = mapped_column(Float, default=0)
+    return_rate: Mapped[float] = mapped_column(Float, default=0)
+    max_drawdown: Mapped[float] = mapped_column(Float, default=0)
+    trade_count: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime)
+
+    paper_account = relationship("PaperAccount", back_populates="monthly_summaries")

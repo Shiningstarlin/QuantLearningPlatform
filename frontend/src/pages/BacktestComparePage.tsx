@@ -41,7 +41,7 @@ export function BacktestComparePage() {
     }
     apiRequest<BacktestComparison>(`/api/backtests/compare?ids=${encodeURIComponent(ids)}`)
       .then((data) => setRuns(data.runs))
-      .catch((err) => setError(err instanceof Error ? err.message : "加载回测对比失败"));
+      .catch((err) => setError(err instanceof Error ? err.message : "加载策略对比失败"));
   }, [ids]);
 
   const bestReturn = useMemo(() => bestBy(runs, (run) => run.total_return), [runs]);
@@ -50,9 +50,9 @@ export function BacktestComparePage() {
 
   return (
     <>
-      <PageHeader title="历史回测对比" subtitle="同一资产与时间区间下，对比不同策略模板的模拟结果。">
+      <PageHeader title="策略回测对比" subtitle="同一标的与时间区间下，对比不同策略模板的模拟结果。">
         <Link className="button" to="/backtests">
-          返回回测列表
+          返回策略回测
         </Link>
       </PageHeader>
 
@@ -76,7 +76,7 @@ export function BacktestComparePage() {
       <section className="data-table comparison-table">
         <div className="data-row header">
           <span>策略</span>
-          <span>资产</span>
+          <span>标的</span>
           <span>总收益</span>
           <span>最大回撤</span>
           <span>交易/胜率</span>
@@ -97,7 +97,7 @@ export function BacktestComparePage() {
             <span>{formatMoney(run.final_equity)}</span>
           </Link>
         ))}
-        {runs.length === 0 ? <div className="empty-state compact-empty">还没有可对比的回测结果。</div> : null}
+        {runs.length === 0 ? <div className="empty-state compact-empty">还没有可对比的策略回测结果。</div> : null}
       </section>
     </>
   );

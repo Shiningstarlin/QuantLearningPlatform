@@ -1,14 +1,14 @@
-import { BarChart3, ClipboardList, Gauge, History, LineChart, LogOut, Settings, UserCircle, WalletCards } from "lucide-react";
+import { BarChart3, BrainCircuit, History, LineChart, LogOut, Settings, UserCircle, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { apiRequest, clearToken, CurrentUser, getToken } from "../lib/api";
 
 const navItems = [
-  { to: "/dashboard", label: "总览", icon: Gauge },
+  { to: "/tasks", label: "我的账户", icon: WalletCards },
   { to: "/market-board", label: "行情看板", icon: LineChart },
-  { to: "/tasks", label: "模拟任务", icon: ClipboardList },
-  { to: "/backtests", label: "历史回测", icon: History },
+  { to: "/factor-radar", label: "因子雷达", icon: BrainCircuit },
+  { to: "/backtests", label: "策略回测", icon: History },
   { to: "/settings", label: "设置", icon: Settings }
 ];
 

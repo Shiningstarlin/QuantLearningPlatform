@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quant Lab · Terminal Flux</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="prototype-shell terminal">
+    <header class="prototype-topbar">
+      <a class="prototype-brand" href="./index.html"><span class="brand-mark">Q/</span><span>Quant Lab</span></a>
+      <nav class="prototype-nav"><span class="nav-active">我的账户</span><span>行情看板</span><span>策略回测</span><a href="#">登录</a></nav>
+    </header>
+    <main class="prototype-main">
+      <section class="guest-banner">
+        <div>
+          <span class="guest-state">Guest session / observation mode</span>
+          <h1>让每一笔模拟<br />都有可解释的轨迹。</h1>
+          <p>登录后可以保存模拟账户、投资项目和结算快照。现在也可以先用游客身份体验策略回测。</p>
+        </div>
+        <div class="guest-actions"><span>当前您未登录，请</span><a href="#">注册账户</a><a class="secondary" href="#">登录账户</a><span>或以游客身份</span><a class="secondary" href="#">进行策略回测</a></div>
+      </section>
+      <section class="account-stage">
+        <span class="stage-label">Demo account / static preview</span>
+        <div class="account-heading"><div><h2>模拟账户示例</h2><p>3 项进行中的投资 · 账户总值按 HKD 观察</p></div><strong>+2.84% / since inception</strong></div>
+        <div class="dashboard-frame">
+          <div class="dashboard-primary">
+            <div class="metric-strip"><div><label>总资产</label><strong>HKD 1,032,840</strong><small>+32,840 / +3.28%</small></div><div><label>实际持有 HKD</label><strong>HKD 284,620</strong><small>现金池 27.6%</small></div><div><label>实际持有 USD</label><strong>USD 31,812</strong><small>参考汇率 7.80</small></div></div>
+            <div class="chart-caption"><span>Equity curve / settlement 06:00 CST</span><strong>HKD 1.03M</strong></div>
+            <svg class="account-chart" viewBox="0 0 760 218" role="img" aria-label="账户净值曲线">
+              <line class="grid-line" x1="0" y1="32" x2="760" y2="32" /><line class="grid-line" x1="0" y1="92" x2="760" y2="92" /><line class="grid-line" x1="0" y1="152" x2="760" y2="152" /><path class="fill" d="M0 166 L64 151 L126 156 L190 132 L250 138 L315 110 L378 126 L442 100 L505 108 L570 76 L632 88 L698 55 L760 62 L760 208 L0 208 Z" /><path class="curve" d="M0 166 L64 151 L126 156 L190 132 L250 138 L315 110 L378 126 L442 100 L505 108 L570 76 L632 88 L698 55 L760 62" /><circle class="dot" cx="760" cy="62" r="5" /><text class="chart-axis" x="0" y="213">01 MAY</text><text class="chart-axis" x="365" y="213">15 MAY</text><text class="chart-axis" x="708" y="213">31 MAY</text>
+            </svg>
+            <div class="project-ribbon"><div><small>HK.00700 / 量化策略</small><strong>HKD 286,730</strong><span>+2.18%</span></div><div><small>US.NVDA / 手动仓位</small><strong>HKD 213,480</strong><span>+5.64%</span></div><div><small>SI=F / 商品观察</small><strong>HKD 152,960</strong><span>-1.12%</span></div></div>
+          </div>
+          <aside class="dashboard-side">
+            <div class="allocation-title"><h3>资金分配</h3><span>1,032,840 HKD</span></div>
+            <div class="allocation-list"><div class="allocation-item"><i class="allocation-marker"></i><div><strong>HK.00700</strong><small>量化策略 · 运行 42 天</small></div><b>286,730</b></div><div class="allocation-item"><i class="allocation-marker gold"></i><div><strong>US.NVDA</strong><small>手动仓位 · 运行 28 天</small></div><b>213,480</b></div><div class="allocation-item"><i class="allocation-marker gold"></i><div><strong>SI=F</strong><small>商品观察 · 运行 16 天</small></div><b>152,960</b></div><div class="allocation-item"><i class="allocation-marker muted"></i><div><strong>未分配</strong><small>现金池 · 可随时分配</small></div><b>379,670</b></div></div>
+            <p class="status-note">示例数据 · 所有金额为模拟资金。完成注册后，系统会在每个结算日保存账户净值和盈亏变化。</p>
+          </aside>
+        </div>
+      </section>
+    </main>
+    <footer class="prototype-footer">STYLE 01 · TERMINAL FLUX · GUEST ACCOUNT VIEW</footer>
+  </body>
+</html>

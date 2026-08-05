@@ -61,7 +61,7 @@ MARKET_BOARD_DEFAULT_SYMBOLS=HK.00700:腾讯控股,HK.03750:宁德时代,HK.0139
 MARKET_BOARD_DEFAULT_ONLY=true
 ```
 
-行情看板会按 provider 合并为批量 `get_market_snapshot` 请求。后台每 30 秒检查一次，只自动刷新处于常规交易时段的市场；手动刷新会强制读取并保存成功返回的数据。当前交易时段判断使用常规工作日时间：港股为香港时间 `09:30-12:00`、`13:00-16:00`，美股为纽约时间 `09:30-16:00`。
+行情看板会按 provider 合并为批量 `get_market_snapshot` 请求。后台每 30 秒检查一次，只自动刷新处于常规交易时段的市场，并保存成功返回的数据；前端看板只读取数据库中已保存的报价。当前交易时段判断使用常规工作日时间：港股为香港时间 `09:30-12:00`、`13:00-16:00`，美股为纽约时间 `09:30-16:00`。
 
 如果你在离线环境或不想请求外部行情，可以切换回 mock：
 
@@ -140,11 +140,11 @@ YFINANCE_DISABLE_PERSISTENT_CACHE=true
 |---|---|
 | `/login` | 登录 |
 | `/register` | 注册 |
-| `/dashboard` | 总览 |
+| `/dashboard` | 重定向到 `/tasks` |
 | `/market-board` | 行情看板 |
 | `/market-board/:id` | 行情资产详情 |
-| `/tasks` | 模拟任务列表 |
-| `/tasks/new` | 创建模拟任务 |
+| `/tasks` | 我的账户：模拟账户、资金概况和投资进程 |
+| `/tasks/new` | 创建投资进程 |
 | `/tasks/:id` | 单个任务详情 |
 | `/tasks/:id/assets` | 关注资产 |
 | `/tasks/:id/logs` | 交易日志 |

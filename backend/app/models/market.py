@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, UniqueConstraint
+from sqlalchemy import DateTime, Float, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -38,6 +38,7 @@ class MarketAsset(Base):
 
 class MarketQuote(Base):
     __tablename__ = "market_quotes"
+    __table_args__ = (Index("ix_market_quotes_asset_time", "asset_id", "quote_time"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     asset_id: Mapped[int] = mapped_column(ForeignKey("market_assets.id"), index=True)

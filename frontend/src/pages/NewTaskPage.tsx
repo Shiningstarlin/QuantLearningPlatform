@@ -1,11 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiRequest, getToken, MarketAsset, PaperAccount, SimulationFeeSchedules, SimulationTask } from "../lib/api";
 import { PageHeader } from "../ui/PageHeader";
 
 export function NewTaskPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [accounts, setAccounts] = useState<PaperAccount[]>([]);
   const [assets, setAssets] = useState<MarketAsset[]>([]);
   const [accountId, setAccountId] = useState("");
@@ -14,10 +15,11 @@ export function NewTaskPage() {
   const [allocatedCash, setAllocatedCash] = useState("100000");
   const [mode, setMode] = useState<"manual" | "quant">("manual");
   const [strategyKey, setStrategyKey] = useState("ma_crossover");
-  const [manualTargetExposure, setManualTargetExposure] = useState("0");
+  const [manualTargetExposure, setManualTargetExposure] = useState("100");
   const [fees, setFees] = useState<SimulationFeeSchedules | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const requestedAccountId = searchParams.get("accountId");
 
   useEffect(() => {
     if (!getToken()) {
@@ -34,14 +36,19 @@ export function NewTaskPage() {
         setAccounts(accountData);
         setAssets(assetData);
         setFees(feeData);
-        if (accountData[0]) setAccountId(String(accountData[0].id));
+        const requestedAccount = accountData.find((account) => String(account.id) === requestedAccountId);
+        if (requestedAccount) {
+          setAccountId(String(requestedAccount.id));
+        } else if (accountData[0]) {
+          setAccountId(String(accountData[0].id));
+        }
         if (assetData[0]) {
           setMarketAssetId(String(assetData[0].id));
-          setName(`${assetData[0].symbol} 投资进程`);
+          setName(`${assetData[0].symbol} 投资项目`);
         }
       })
       .catch((err) => setError(err instanceof Error ? err.message : "加载账户或行情资产失败"));
-  }, [navigate]);
+  }, [navigate, requestedAccountId]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -66,7 +73,7 @@ export function NewTaskPage() {
       });
       navigate(`/tasks/${task.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "创建投资进程失败");
+      setError(err instanceof Error ? err.message : "创建投资项目失败");
     } finally {
       setLoading(false);
     }
@@ -81,7 +88,7 @@ export function NewTaskPage() {
 
   return (
     <>
-      <PageHeader title="新建投资进程" subtitle="在某个模拟账户下，为单个资产分配一笔独立资金。">
+      <PageHeader title="新建投资项目" subtitle="从一个模拟账户中划出资金，专门跟踪某个资产的投资表现。">
         <Link className="button" to="/tasks">
           返回账户总览
         </Link>
@@ -93,14 +100,14 @@ export function NewTaskPage() {
           <select value={accountId} onChange={(event) => setAccountId(event.target.value)} required>
             {accounts.map((account) => (
               <option value={account.id} key={account.id}>
-                {account.name} · 可用 {account.cash_hkd.toFixed(2)} HKD · {account.tasks.length}/{account.max_processes} 进程
+                {account.name} · 可用 {account.cash_hkd.toFixed(2)} HKD · {account.tasks.length}/{account.max_processes} 项投资
               </option>
             ))}
           </select>
         </label>
         {selectedAccount ? (
           <div className="empty-state compact-empty">
-            当前账户可用 {selectedAccount.cash_hkd.toFixed(2)} HKD / {selectedAccount.cash_usd.toFixed(2)} USD，已有 {processCount} 个运行中进程。
+            当前账户可用 {selectedAccount.cash_hkd.toFixed(2)} HKD / {selectedAccount.cash_usd.toFixed(2)} USD，已有 {processCount} 项进行中的投资。
           </div>
         ) : null}
 
@@ -113,7 +120,7 @@ export function NewTaskPage() {
               setMarketAssetId(nextId);
               const asset = assets.find((item) => String(item.id) === nextId);
               if (asset) {
-                setName(`${asset.symbol} 投资进程`);
+                setName(`${asset.symbol} 投资项目`);
               }
             }}
             required
@@ -132,7 +139,7 @@ export function NewTaskPage() {
         ) : null}
 
         <label>
-          进程名称
+          项目名称
           <input value={name} onChange={(event) => setName(event.target.value)} required />
         </label>
 
@@ -145,7 +152,7 @@ export function NewTaskPage() {
             </div>
           </label>
           <label>
-            进程模式
+            投资方式
             <select value={mode} onChange={(event) => setMode(event.target.value as "manual" | "quant")}>
               <option value="manual">手动</option>
               <option value="quant">量化策略</option>
@@ -167,8 +174,8 @@ export function NewTaskPage() {
             </select>
           </label>
         ) : (
-          <label>
-            初始投入比例：{manualTargetExposure}%
+          <label className="range-label">
+            初始目标仓位：{manualTargetExposure}%
             <input
               type="range"
               min="0"
@@ -177,6 +184,9 @@ export function NewTaskPage() {
               value={manualTargetExposure}
               onChange={(event) => setManualTargetExposure(event.target.value)}
             />
+            <small>
+              目标仓位表示本项目分配资金中计划立即买入标的的比例。100% 表示全部买入，0% 表示暂时保留为现金，之后可在项目管理页手动调整。
+            </small>
           </label>
         )}
 
@@ -199,7 +209,7 @@ export function NewTaskPage() {
 
         {error ? <div className="error-text">{error}</div> : null}
         <button className="button primary" type="submit" disabled={loading || accounts.length === 0 || assets.length === 0}>
-          {loading ? "创建中..." : "创建投资进程"}
+          {loading ? "创建中..." : "创建投资项目"}
         </button>
       </form>
     </>

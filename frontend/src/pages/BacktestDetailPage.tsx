@@ -16,7 +16,7 @@ function formatNumber(value: number) {
 function statusLabel(status?: string) {
   if (status === "completed") return "已完成";
   if (status === "failed") return "失败";
-  if (status === "pending") return "运行中";
+  if (status === "pending") return "计算中";
   return status ?? "-";
 }
 
@@ -36,7 +36,7 @@ export function BacktestDetailPage() {
     if (!backtestId) return;
     apiRequest<BacktestDetail>(`/api/backtests/${backtestId}`)
       .then(setDetail)
-      .catch((err) => setError(err instanceof Error ? err.message : "加载回测失败"));
+      .catch((err) => setError(err instanceof Error ? err.message : "加载策略回测失败"));
   }, [backtestId]);
 
   const run = detail?.run;
@@ -62,19 +62,19 @@ export function BacktestDetailPage() {
 
   return (
     <>
-      <PageHeader title={run?.name ?? `回测 #${backtestId}`} subtitle={run ? `${run.symbol} · ${run.provider} · ${run.start_date} 至 ${run.end_date}` : "加载中"}>
+      <PageHeader title={run?.name ?? `策略回测 #${backtestId}`} subtitle={run ? `${run.symbol} · ${run.provider} · ${run.start_date} 至 ${run.end_date}` : "加载中"}>
         <Link className="button" to="/backtests">
-          返回回测列表
+          返回策略回测
         </Link>
       </PageHeader>
 
       {error ? <div className="error-text">{error}</div> : null}
-      {run?.status === "failed" ? <div className="error-text">{run.error_message || "回测失败"}</div> : null}
+      {run?.status === "failed" ? <div className="error-text">{run.error_message || "策略回测失败"}</div> : null}
 
       {siblingRuns.length > 1 ? (
         <section className="run-switcher">
           <div>
-            <strong>{task?.name ?? "同一回测任务"}</strong>
+            <strong>{task?.name ?? "同一策略回测"}</strong>
             <span>切换查看同一任务下的其它策略结果</span>
           </div>
           <div className="run-switcher-actions">
@@ -174,7 +174,7 @@ export function BacktestDetailPage() {
             <span>{trade.reason}</span>
           </div>
         ))}
-        {trades.length === 0 ? <div className="empty-state compact-empty">这次回测没有产生交易。</div> : null}
+        {trades.length === 0 ? <div className="empty-state compact-empty">这次策略回测没有产生交易。</div> : null}
       </section>
     </>
   );

@@ -95,6 +95,54 @@ class PaperAccountRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class AccountDailySummaryRead(BaseModel):
+    summary_date: date
+    snapshot_at: datetime
+    cash_hkd: float
+    market_value_hkd: float
+    equity_hkd: float
+    net_cash_flow_hkd: float
+    pnl_hkd: float
+    return_rate: float
+    cumulative_pnl_hkd: float
+    trade_count: int
+
+    model_config = {"from_attributes": True}
+
+
+class AccountMonthlySummaryRead(BaseModel):
+    year: int
+    month: int
+    start_equity_hkd: float
+    end_equity_hkd: float
+    net_cash_flow_hkd: float
+    pnl_hkd: float
+    return_rate: float
+    max_drawdown: float
+    trade_count: int
+
+    model_config = {"from_attributes": True}
+
+
+class AccountOverallPerformanceRead(BaseModel):
+    initial_equity_hkd: float
+    current_equity_hkd: float
+    total_pnl_hkd: float
+    total_return: float
+    peak_equity_hkd: float
+    max_drawdown: float
+    total_trade_count: int
+
+
+class PaperAccountPerformanceRead(BaseModel):
+    settlement_timezone: str
+    settlement_time: str
+    as_of: datetime
+    overall: AccountOverallPerformanceRead
+    daily: list[AccountDailySummaryRead] = Field(default_factory=list)
+    monthly: list[AccountMonthlySummaryRead] = Field(default_factory=list)
+
+
 class FeeLineRead(BaseModel):
     name: str
     value: str

@@ -1,7 +1,8 @@
+from collections import defaultdict
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -21,15 +22,26 @@ class MarketBoardService:
         default_assets = [self._parse_default_asset(raw_symbol) for raw_symbol in settings.market_board_default_symbols.split(",")]
         default_keys = {(symbol, self.PROVIDER) for symbol, _name in default_assets if symbol}
 
+        existing_assets = list(self.db.scalars(select(MarketAsset)))
+        existing_by_key = {(asset.symbol, asset.provider): asset for asset in existing_assets}
+
         if settings.market_board_default_only and default_keys:
-            for asset in self.db.scalars(select(MarketAsset)):
+            for asset in existing_assets:
                 asset.enabled = (asset.symbol, asset.provider) in default_keys
 
         for symbol, name in default_assets:
             if symbol:
                 exchange = symbol.split(".", 1)[0] if "." in symbol else ""
-                self.add_asset(
-                    MarketAssetCreate(
+                asset = existing_by_key.get((symbol, self.PROVIDER))
+                if asset is not None:
+                    asset.enabled = True
+                    asset.name = name or asset.name
+                    asset.exchange = exchange or asset.exchange
+                    asset.asset_type = asset.asset_type or "stock"
+                    continue
+
+                self.db.add(
+                    MarketAsset(
                         symbol=symbol,
                         name=name,
                         asset_type="stock",
@@ -135,8 +147,32 @@ class MarketBoardService:
 
     def latest_quote(self, asset_id: int) -> MarketQuote | None:
         return self.db.scalar(
-            select(MarketQuote).where(MarketQuote.asset_id == asset_id).order_by(MarketQuote.quote_time.desc())
+            select(MarketQuote).where(MarketQuote.asset_id == asset_id).order_by(MarketQuote.quote_time.desc()).limit(1)
         )
+
+    def latest_quotes_by_asset(self, asset_ids: list[int]) -> dict[int, MarketQuote]:
+        if not asset_ids:
+            return {}
+
+        ranked_quotes = (
+            select(
+                MarketQuote.id.label("quote_id"),
+                func.row_number()
+                .over(
+                    partition_by=MarketQuote.asset_id,
+                    order_by=[MarketQuote.quote_time.desc(), MarketQuote.id.desc()],
+                )
+                .label("rank"),
+            )
+            .where(MarketQuote.asset_id.in_(asset_ids))
+            .subquery()
+        )
+        rows = self.db.scalars(
+            select(MarketQuote)
+            .join(ranked_quotes, MarketQuote.id == ranked_quotes.c.quote_id)
+            .where(ranked_quotes.c.rank == 1)
+        )
+        return {quote.asset_id: quote for quote in rows}
 
     def quote_history(self, asset_id: int, limit: int = 30) -> list[MarketQuote]:
         return list(
@@ -147,6 +183,36 @@ class MarketBoardService:
                 .limit(limit)
             )
         )[::-1]
+
+    def quote_history_by_asset(self, asset_ids: list[int], limit: int = 30) -> dict[int, list[MarketQuote]]:
+        if not asset_ids:
+            return {}
+
+        ranked_quotes = (
+            select(
+                MarketQuote.id.label("quote_id"),
+                func.row_number()
+                .over(
+                    partition_by=MarketQuote.asset_id,
+                    order_by=[MarketQuote.quote_time.desc(), MarketQuote.id.desc()],
+                )
+                .label("rank"),
+            )
+            .where(MarketQuote.asset_id.in_(asset_ids))
+            .subquery()
+        )
+        rows = list(
+            self.db.scalars(
+                select(MarketQuote)
+                .join(ranked_quotes, MarketQuote.id == ranked_quotes.c.quote_id)
+                .where(ranked_quotes.c.rank <= limit)
+                .order_by(MarketQuote.asset_id, MarketQuote.quote_time.asc(), MarketQuote.id.asc())
+            )
+        )
+        grouped: dict[int, list[MarketQuote]] = defaultdict(list)
+        for quote in rows:
+            grouped[quote.asset_id].append(quote)
+        return dict(grouped)
 
     def aggregated_history(self, asset_id: int, timeframe: str, limit: int = 80) -> list[MarketQuote]:
         quotes = list(

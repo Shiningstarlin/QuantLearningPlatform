@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     polygon_api_key: str = ""
     twelvedata_api_key: str = ""
 
+    ai_api_key: str = ""
+    ai_model: str = ""
+    ai_base_url: str = "https://api.openai.com/v1"
+    ai_request_timeout: int = 45
+
     default_tax_rate: float = 0.001
     default_commission_rate: float = 0.0003
     default_slippage_rate: float = 0.0005

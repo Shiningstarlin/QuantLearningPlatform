@@ -27,7 +27,7 @@ export function TaskDetailPage() {
       setTask(loadedTask);
       setTargetExposure(String(Math.round((loadedTask.manual_target_exposure ?? 0) * 100)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "加载任务失败");
+      setError(err instanceof Error ? err.message : "加载投资项目失败");
     }
   }
 
@@ -78,9 +78,9 @@ export function TaskDetailPage() {
 
   return (
     <>
-      <PageHeader title={task?.name ?? `任务 #${taskId}`} subtitle="查看账户、策略和手动控制。">
+      <PageHeader title={task?.name ?? `投资项目 #${taskId}`} subtitle="查看资金、策略和手动调整。">
         <Link className="button" to="/tasks">
-          返回任务列表
+          返回我的账户
         </Link>
       </PageHeader>
 
@@ -92,7 +92,7 @@ export function TaskDetailPage() {
           <strong>{statusLabel(task?.status)}</strong>
         </div>
         <div className="metric-card">
-          <span>进程净值</span>
+          <span>项目净值</span>
           <strong>{account ? `${account.equity.toFixed(2)} ${task?.base_currency ?? ""}` : "-"}</strong>
         </div>
         <div className="metric-card">
